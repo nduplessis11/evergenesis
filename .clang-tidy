@@ -1,0 +1,56 @@
+Checks: >-
+  # Start with these sets:
+  bugprone-*,
+  performance-*,
+  readability-*,
+  modernize-*,
+
+  # Turn off checks that might conflict with older Boost patterns:
+  -modernize-use-trailing-return-type,
+  -modernize-use-auto,                # Many Boost libraries prefer explicit types.
+  -readability-avoid-const-params-in-decls,
+  -readability-identifier-naming      # We'll re-enable specifically below with custom rules.
+
+  # If you want to keep the code closer to older C++ standards, consider disabling more modernize-* checks.
+  
+  # Re-enable readability-identifier-naming with custom rules
+  ,readability-identifier-naming
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'  # or your custom filter, e.g. 'src/.*|include/.*'
+
+CheckOptions:
+  # Example naming rules. Many Boost libraries have no single standard for naming,
+  # but to illustrate, let's say we prefer snake_case for functions and variables.
+  #
+  # If you want to just "check/warn" but not fix, omit the rename feature or avoid using `-fix`.
+  - key:             readability-identifier-naming.FunctionCase
+    value:           lower_case
+  - key:             readability-identifier-naming.MethodCase
+    value:           lower_case
+  - key:             readability-identifier-naming.ParameterCase
+    value:           lower_case
+  - key:             readability-identifier-naming.VariableCase
+    value:           lower_case
+  - key:             readability-identifier-naming.MemberCase
+    value:           lower_case
+  - key:             readability-identifier-naming.PrivateMemberSuffix
+    value:           _
+  - key:             readability-identifier-naming.MemberSuffix
+    value:           ""
+  - key:             readability-identifier-naming.ConstexprVariableCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.ConstantCase
+    value:           UPPER_CASE
+  - key: readability-identifier-naming.ConstantParameterCase
+    value: lower_case
+
+  # If you want macros to be ALL_CAPS:
+  - key:             readability-identifier-naming.MacroDefinitionCase
+    value:           UPPER_CASE
+
+  # Some modernization checks:
+  - key:             modernize-loop-convert.MinConfidence
+    value:           reasonable
+
+  # Tweak any other check-specific options here.

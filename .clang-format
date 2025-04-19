@@ -1,0 +1,54 @@
+---
+# Note: Boost doesn't have a unified .clang-format, so this is a reasonable approximation.
+
+BasedOnStyle: LLVM       # Start from LLVM's base style, then override below.
+Language: Cpp
+Standard: c++20
+
+# Core indentation/formatting
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never            # Boost typically avoids tabs in code.
+AccessModifierOffset: -4 # Keep 'public:', 'protected:', 'private:' aligned with class definition.
+NamespaceIndentation: None
+IndentCaseLabels: false
+
+# Column wrapping
+ColumnLimit: 80          # Historically, many Boost libraries aim for ~80 columns.
+
+# Braces
+BreakBeforeBraces: Attach
+BraceWrapping:
+  AfterNamespace: true
+  AfterClass: true
+  AfterStruct: true
+  AfterEnum: true
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+
+# Alignment preferences
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignTrailingComments: false
+AlignOperands: false
+
+# Function declarations
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Includes
+SortIncludes: false
+IncludeBlocks: Preserve
+IncludeIsMainRegex: ''
+
+# Spacing
+SpaceBeforeAssignmentOperators: true
+PointerAlignment: Left
+SpaceAfterCStyleCast: true
+
+# Others
+Cpp11BracedListStyle: true
+ReflowComments: true
+MaxEmptyLinesToKeep: 1
