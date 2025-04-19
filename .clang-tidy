@@ -36,14 +36,16 @@ CheckOptions:
     value:           lower_case
   - key:             readability-identifier-naming.PrivateMemberSuffix
     value:           _
-  - key:             readability-identifier-naming.MemberSuffix
-    value:           ""
+  - key:             readability-identifier-naming.StaticVariableSuffix
+    value:           _
+  - key:             readability-identifier-naming.ClassMemberSuffix
+    value:           _
   - key:             readability-identifier-naming.ConstexprVariableCase
     value:           UPPER_CASE
   - key:             readability-identifier-naming.ConstantCase
     value:           UPPER_CASE
-  - key: readability-identifier-naming.ConstantParameterCase
-    value: lower_case
+  - key:             readability-identifier-naming.ConstantParameterCase
+    value:           lower_case
 
   # If you want macros to be ALL_CAPS:
   - key:             readability-identifier-naming.MacroDefinitionCase

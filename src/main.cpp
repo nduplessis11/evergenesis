@@ -9,13 +9,15 @@ import Renderer.Glyph;
 constexpr int WIDTH = 800;
 constexpr int HEIGHT = 600;
 
+static constexpr auto FONT_ATLAS = "assets/fonts/cp437_8x16.png";
+
 auto main() -> int {
     RenderSystem renderer;
     if (!renderer.init("Colony Sim", WIDTH, HEIGHT)) {
         return -1;
     }
 
-    if (GlyphRenderer glyph_renderer; !glyph_renderer.init()) {
+    if (GlyphRenderer glyph_renderer; !glyph_renderer.init(FONT_ATLAS)) {
         renderer.cleanup();
         return -1;
     }
@@ -41,6 +43,7 @@ auto main() -> int {
         renderer.swap_buffers();
     }
 
+    GlyphRenderer::cleanup();
     renderer.cleanup();
     return 0;
 }
