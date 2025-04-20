@@ -13,7 +13,7 @@ public:
     static auto cleanup() -> void;
 
     /// Render a string at tile coords (x,y) in characters
-    static void render_text(const char* text, int x, int y); // NOLINT(*-identifier-length)
+    static void render_text(const char* text, int start_x, int start_y);
 private:
     static uint32_t font_texture_;
     static uint32_t vao_;

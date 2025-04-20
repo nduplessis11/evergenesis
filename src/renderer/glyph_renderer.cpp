@@ -9,8 +9,11 @@ module Renderer.Glyph;
 constexpr uint32_t PROJECTION_MATRIX_SIZE = 16;
 constexpr uint32_t GLYPH_WIDTH = 8;
 constexpr uint32_t GLYPH_HEIGHT = 16;
-constexpr uint32_t ATLAS_COLS = 16;
-constexpr uint32_t ATLAS_ROWS = 16;
+constexpr uint32_t ATLAS_COLS = 32;
+constexpr uint32_t ATLAS_ROWS = 8;
+
+constexpr size_t VERTICES_PER_QUAD = 6;
+constexpr size_t FLOATS_PER_VERTEX = 4;
 
 uint32_t GlyphRenderer::font_texture_ = 0;
 uint32_t GlyphRenderer::vao_ = 0;
@@ -20,8 +23,8 @@ uint32_t GlyphRenderer::glyph_width_ = GLYPH_WIDTH;
 uint32_t GlyphRenderer::glyph_height_ = GLYPH_HEIGHT;
 uint32_t GlyphRenderer::atlas_cols_ = ATLAS_COLS;
 uint32_t GlyphRenderer::atlas_rows_ = ATLAS_ROWS;
-uint32_t GlyphRenderer::screen_width_ = 0;
-uint32_t GlyphRenderer::screen_height_ = 0;
+uint32_t GlyphRenderer::screen_width_ = 800;
+uint32_t GlyphRenderer::screen_height_ = 600;
 
 auto compile_shader(const uint32_t shader_type, const char* src) -> uint32_t {
     const uint32_t shader = glCreateShader(shader_type);
@@ -38,8 +41,7 @@ auto GlyphRenderer::init(const char* atlas_path) -> bool {
                      SDL_GetError());
         return false;
     }
-    screen_width_ = surface->w;
-    screen_height_ = surface->h;
+
     std::println("[GlyphRenderer] loaded font atlas '{}', texture id {}.",
                  atlas_path, font_texture_);
 
@@ -98,8 +100,6 @@ auto GlyphRenderer::init(const char* atlas_path) -> bool {
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 
-    constexpr size_t VERTICES_PER_QUAD = 6;
-    constexpr size_t FLOATS_PER_VERTEX = 4;
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(float) * VERTICES_PER_QUAD * FLOATS_PER_VERTEX, nullptr,
                  GL_DYNAMIC_DRAW);
@@ -128,21 +128,72 @@ auto GlyphRenderer::cleanup() -> void {
     font_texture_ = 0;
 }
 
-void GlyphRenderer::render_text(const char* text, int x, int y) {
+void GlyphRenderer::render_text(const char* text, const int start_x,
+                                const int start_y) {
     glUseProgram(shader_program_);
     glBindVertexArray(vao_);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, font_texture_);
+
+    // Precompute texture coordinate scales
+    const float uv_scale_x = 1.F / static_cast<float>(atlas_cols_);
+    const float uv_scale_y = 1.F / static_cast<float>(atlas_rows_);
 
     const float width = static_cast<float>(screen_width_);
     const float height = static_cast<float>(screen_height_);
 
     // Orthographic projection: assume unit = pixel
     // clang-format off
-    std::array proj = {
+    const std::array projection_matrix = {
         2.F/width,  0.F,         0.F, -1.F,     // NOLINT(*-magic-numbers)
-        0.F,        2.F/height,  0.F, -1.F,     // NOLINT(*-magic-numbers)
+        0.F,       -2.F/height,  0.F,  1.F,     // NOLINT(*-magic-numbers)
         0.F,        0.F,        -1.F,  0.F,
         0.F,        0.F,         0.F,  1.F
     };
     // clang-format on
+
+    const int32_t loc = glGetUniformLocation(shader_program_, "u_proj");
+    glUniformMatrix4fv(loc, 1, GL_TRUE, projection_matrix.data());
+
+    int32_t cursor_x = start_x;
+    const int32_t cursor_y = start_y;
+    for (const char* ptr = text; *ptr != 0; ptr++) {
+        const uint8_t glyph_code = static_cast<uint8_t>(*ptr);
+        const uint32_t tile_x = glyph_code % atlas_cols_;
+        const uint32_t tile_y = glyph_code / atlas_cols_;
+
+        const float min_u = static_cast<float>(tile_x) * uv_scale_x;
+        const float min_v = static_cast<float>(tile_y) * uv_scale_y;
+        const float max_u = min_u + uv_scale_x;
+        const float max_v = min_v + uv_scale_y;
+
+        const float screen_pos_x =
+            static_cast<float>(cursor_x) * static_cast<float>(glyph_width_);
+        const float screen_pos_y =
+            static_cast<float>(cursor_y) * static_cast<float>(glyph_height_);
+        const float tile_width = static_cast<float>(glyph_width_);
+        const float tile_height = static_cast<float>(glyph_height_);
+
+        // clang-format off
+        std::array<std::array<float,FLOATS_PER_VERTEX>, VERTICES_PER_QUAD> vertices = { {
+            { screen_pos_x,                 screen_pos_y + tile_height, min_u, max_v },
+            { screen_pos_x,                 screen_pos_y,               min_u, min_v },
+            { screen_pos_x + tile_width,    screen_pos_y,               max_u, min_v },
+            { screen_pos_x,                 screen_pos_y + tile_height, min_u, max_v },
+            { screen_pos_x + tile_width,    screen_pos_y,               max_u, min_v },
+            { screen_pos_x + tile_width,    screen_pos_y + tile_height, max_u, max_v },
+        }};
+        // clang-format on
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glBindVertexArray(vao_);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float), vertices.data());
+
+        glDrawArrays(GL_TRIANGLES, 0, VERTICES_PER_QUAD);
+
+        ++cursor_x;
+    }
 }

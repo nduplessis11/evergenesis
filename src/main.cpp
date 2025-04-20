@@ -17,7 +17,7 @@ auto main() -> int {
         return -1;
     }
 
-    if (GlyphRenderer glyph_renderer; !glyph_renderer.init(FONT_ATLAS)) {
+    if (GlyphRenderer glyph_renderer; !GlyphRenderer::init(FONT_ATLAS)) {
         renderer.cleanup();
         return -1;
     }
@@ -38,7 +38,7 @@ auto main() -> int {
         glClearColor(0.1F, 0.1F, 0.1F, 1.0F); // NOLINT(*-magic-numbers)
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // TODO: render world tiles + UI here
+        GlyphRenderer::render_text("hello", 1, 1);
 
         renderer.swap_buffers();
     }
