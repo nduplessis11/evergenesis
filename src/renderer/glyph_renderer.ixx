@@ -2,7 +2,8 @@
 // glyph_renderer.ixx
 //-----------------------------------------------------------------------------
 module;
-#include <array>
+#include "glm/mat4x4.hpp"
+
 #include <cstdint>
 #include <optional>
 
@@ -44,12 +45,12 @@ private:
               uint32_t screen_height) -> bool;
 
     // GPU resources and configuration
-    uint32_t                                  font_texture_{0};
-    uint32_t                                  vao_{0};
-    uint32_t                                  vbo_{0};
-    uint32_t                                  shader_program_{0};
-    int32_t                                   u_projection_loc_{-1};
-    std::array<float, PROJECTION_MATRIX_SIZE> projection_matrix_{};
+    uint32_t  font_texture_{0};
+    uint32_t  vao_{0};
+    uint32_t  vbo_{0};
+    uint32_t  shader_program_{0};
+    int32_t   u_projection_loc_{-1};
+    glm::mat4 projection_matrix_{};
 
     float    glyph_width_{};
     float    glyph_height_{};

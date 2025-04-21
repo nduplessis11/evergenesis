@@ -45,7 +45,7 @@ auto RenderSystem::init(const char* title, const int width, const int height)
         return false;
     }
 
-    // Load GL function pointers, e.g. with GLAD
+    // Load GL function pointers, e.g., with GLAD
     if (gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress) == 0) {
         std::println(stderr, "Failed to initialize GLAD");
         return false;

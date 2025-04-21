@@ -2,6 +2,9 @@
 // glyph_renderer.cpp
 //-----------------------------------------------------------------------------
 module;
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/gtc/type_ptr.inl"
+
 #include <SDL3_image/SDL_image.h>
 #include <array>
 #include <glad/gl.h>
@@ -131,7 +134,7 @@ auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     SDL_DestroySurface(surface);
 
-    constexpr char const* VS_SOURCE = R"GLSL(
+    constexpr auto VS_SOURCE = R"GLSL(
     #version 330 core
     layout(location=0) in vec4 a_pos_uv;
     out vec2 v_uv;
@@ -142,7 +145,7 @@ auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
     }
     )GLSL";
 
-    constexpr char const* FS_SOURCE = R"GLSL(
+    constexpr auto FS_SOURCE = R"GLSL(
     #version 330 core
     in vec2 v_uv;
     uniform sampler2D u_tex;
@@ -173,18 +176,16 @@ auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
 
-    const float width  = static_cast<float>(screen_width_);
-    const float height = static_cast<float>(screen_height_);
-    // clang-format off
-    // NOLINTBEGIN(*-magic-numbers)
-    projection_matrix_ = {
-        2.F / width,  0.F,           0.F, -1.F,
-        0.F,         -2.F / height,  0.F,  1.F,
-        0.F,          0.F,          -1.F,  0.F,
-        0.F,          0.F,           0.F,  1.F
-    };
-    // NOLINTEND(*-magic-numbers)
-    // clang-format on
+    const auto width  = static_cast<float>(screen_width_);
+    const auto height = static_cast<float>(screen_height_);
+
+    projection_matrix_ = glm::ortho(0.0F,
+                                    static_cast<float>(width),
+                                    static_cast<float>(height),
+                                    0.0F,
+                                    -1.0F,
+                                    1.0F);
+
     return true;
 }
 
@@ -221,8 +222,8 @@ void GlyphRenderer::render_text(const char* text, const int32_t start_col,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUniformMatrix4fv(u_projection_loc_,
                        1,
-                       GL_TRUE,
-                       projection_matrix_.data());
+                       GL_FALSE,
+                       glm::value_ptr(projection_matrix_));
 
     const float    uv_scale_x = 1.F / static_cast<float>(atlas_cols_);
     const float    uv_scale_y = 1.F / static_cast<float>(atlas_rows_);
@@ -230,7 +231,7 @@ void GlyphRenderer::render_text(const char* text, const int32_t start_col,
     const uint32_t row_idx    = start_row;
 
     for (const char* ptr = text; *ptr != 0; ++ptr, ++col_idx) {
-        const uint8_t  glyph_code = static_cast<uint8_t>(*ptr);
+        const auto     glyph_code = static_cast<uint8_t>(*ptr);
         const uint32_t tile_x_idx = glyph_code % atlas_cols_;
         const uint32_t tile_y_idx = glyph_code / atlas_cols_;
         const float    min_u      = static_cast<float>(tile_x_idx) * uv_scale_x;
@@ -243,10 +244,10 @@ void GlyphRenderer::render_text(const char* text, const int32_t start_col,
         // clang-format off
         std::array<std::array<float, FLOATS_PER_VERTEX>, VERTICES_PER_QUAD> verts = {{
             {{ pos_x,                 pos_y + glyph_height_, min_u, max_v }},
-            {{ pos_x,                 pos_y,                min_u, min_v }},
-            {{ pos_x + glyph_width_,  pos_y,                max_u, min_v }},
+            {{ pos_x,                 pos_y,                 min_u, min_v }},
+            {{ pos_x + glyph_width_,  pos_y,                 max_u, min_v }},
             {{ pos_x,                 pos_y + glyph_height_, min_u, max_v }},
-            {{ pos_x + glyph_width_,  pos_y,                max_u, min_v }},
+            {{ pos_x + glyph_width_,  pos_y,                 max_u, min_v }},
             {{ pos_x + glyph_width_,  pos_y + glyph_height_, max_u, max_v }}
         }};
         // clang-format on
@@ -270,8 +271,8 @@ void GlyphRenderer::render_console(const char* glyphs, const uint32_t cols,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUniformMatrix4fv(u_projection_loc_,
                        1,
-                       GL_TRUE,
-                       projection_matrix_.data());
+                       GL_FALSE,
+                       glm::value_ptr(projection_matrix_));
 
     const float        uv_step_x = 1.F / static_cast<float>(atlas_cols_);
     const float        uv_step_y = 1.F / static_cast<float>(atlas_rows_);
@@ -283,7 +284,7 @@ void GlyphRenderer::render_console(const char* glyphs, const uint32_t cols,
 
     for (uint32_t row_idx = 0; row_idx < rows; ++row_idx) {
         for (uint32_t col_idx = 0; col_idx < cols; ++col_idx) {
-            const uint8_t glyph_code = static_cast<uint8_t>(
+            const auto glyph_code = static_cast<uint8_t>(
                                      glyphs[(row_idx * cols) + col_idx]);
             const uint32_t tile_x_idx = glyph_code % atlas_cols_;
             const uint32_t tile_y_idx = glyph_code / atlas_cols_;
@@ -304,10 +305,8 @@ void GlyphRenderer::render_console(const char* glyphs, const uint32_t cols,
         }
     }
 
-    const GLsizeiptr size = static_cast<GLsizeiptr>(verts.size() *
-                                                    sizeof(float));
+    const auto size = static_cast<GLsizeiptr>(verts.size() * sizeof(float));
     glBufferData(GL_ARRAY_BUFFER, size, verts.data(), GL_DYNAMIC_DRAW);
-    const GLsizei count = static_cast<GLsizei>(verts.size() /
-                                               FLOATS_PER_VERTEX);
+    const auto count = static_cast<GLsizei>(verts.size() / FLOATS_PER_VERTEX);
     glDrawArrays(GL_TRIANGLES, 0, count);
 }
