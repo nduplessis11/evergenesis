@@ -1,14 +1,14 @@
 module;
 #include <array>
+#include <vector>
 #include <print>
 #include <SDL3_image/SDL_image.h>
 #include <glad/gl.h>
 
 module Renderer.Glyph;
 
-constexpr uint32_t PROJECTION_MATRIX_SIZE = 16;
-constexpr uint32_t GLYPH_WIDTH = 8;
-constexpr uint32_t GLYPH_HEIGHT = 16;
+constexpr uint32_t GLYPH_WIDTH = 8.F;
+constexpr uint32_t GLYPH_HEIGHT = 16.F;
 constexpr uint32_t ATLAS_COLS = 32;
 constexpr uint32_t ATLAS_ROWS = 8;
 
@@ -18,13 +18,15 @@ constexpr size_t FLOATS_PER_VERTEX = 4;
 uint32_t GlyphRenderer::font_texture_ = 0;
 uint32_t GlyphRenderer::vao_ = 0;
 uint32_t GlyphRenderer::vbo_ = 0;
+int32_t GlyphRenderer::u_projection_loc_ = 0;
+std::array<float, PROJECTION_MATRIX_SIZE> GlyphRenderer::projection_matrix_;
 uint32_t GlyphRenderer::shader_program_ = 0;
-uint32_t GlyphRenderer::glyph_width_ = GLYPH_WIDTH;
-uint32_t GlyphRenderer::glyph_height_ = GLYPH_HEIGHT;
+float GlyphRenderer::glyph_width_ = GLYPH_WIDTH;
+float GlyphRenderer::glyph_height_ = GLYPH_HEIGHT;
 uint32_t GlyphRenderer::atlas_cols_ = ATLAS_COLS;
 uint32_t GlyphRenderer::atlas_rows_ = ATLAS_ROWS;
-uint32_t GlyphRenderer::screen_width_ = 800;
-uint32_t GlyphRenderer::screen_height_ = 600;
+uint32_t GlyphRenderer::screen_width_ = 0;
+uint32_t GlyphRenderer::screen_height_ = 0;
 
 auto compile_shader(const uint32_t shader_type, const char* src) -> uint32_t {
     const uint32_t shader = glCreateShader(shader_type);
@@ -33,7 +35,11 @@ auto compile_shader(const uint32_t shader_type, const char* src) -> uint32_t {
     return shader;
 }
 
-auto GlyphRenderer::init(const char* atlas_path) -> bool {
+auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
+                         const uint32_t screen_height) -> bool {
+    screen_width_ = screen_width;
+    screen_height_ = screen_height;
+
     // Initialize SDL_image of PNG support
     SDL_Surface* surface = IMG_Load(atlas_path);
     if (surface == nullptr) {
@@ -93,6 +99,7 @@ auto GlyphRenderer::init(const char* atlas_path) -> bool {
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
     shader_program_ = program;
+    u_projection_loc_ = glGetUniformLocation(shader_program_, "u_proj");
 
     // VAO/VBO for quad (x,y,u,v)
     glGenVertexArrays(1, &vao_);
@@ -105,6 +112,18 @@ auto GlyphRenderer::init(const char* atlas_path) -> bool {
                  GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+
+    const float width = static_cast<float>(screen_width_);
+    const float height = static_cast<float>(screen_height_);
+    // Orthographic projection: assume unit = pixel
+    // clang-format off
+    projection_matrix_ = {
+        2.F/width,  0.F,         0.F, -1.F,     // NOLINT(*-magic-numbers)
+        0.F,       -2.F/height,  0.F,  1.F,     // NOLINT(*-magic-numbers)
+        0.F,        0.F,        -1.F,  0.F,
+        0.F,        0.F,         0.F,  1.F
+    };
+    // clang-format on
 
     return true;
 }
@@ -128,36 +147,27 @@ auto GlyphRenderer::cleanup() -> void {
     font_texture_ = 0;
 }
 
-void GlyphRenderer::render_text(const char* text, const int start_x,
-                                const int start_y) {
+void GlyphRenderer::render_text(const char* glyphs, const uint32_t cols,
+                                const uint32_t rows) {
     glUseProgram(shader_program_);
     glBindVertexArray(vao_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, font_texture_);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glUniformMatrix4fv(u_projection_loc_, 1, GL_TRUE,
+                       projection_matrix_.data());
 
     // Precompute texture coordinate scales
     const float uv_scale_x = 1.F / static_cast<float>(atlas_cols_);
     const float uv_scale_y = 1.F / static_cast<float>(atlas_rows_);
 
-    const float width = static_cast<float>(screen_width_);
-    const float height = static_cast<float>(screen_height_);
-
-    // Orthographic projection: assume unit = pixel
-    // clang-format off
-    const std::array projection_matrix = {
-        2.F/width,  0.F,         0.F, -1.F,     // NOLINT(*-magic-numbers)
-        0.F,       -2.F/height,  0.F,  1.F,     // NOLINT(*-magic-numbers)
-        0.F,        0.F,        -1.F,  0.F,
-        0.F,        0.F,         0.F,  1.F
-    };
-    // clang-format on
-
-    const int32_t loc = glGetUniformLocation(shader_program_, "u_proj");
-    glUniformMatrix4fv(loc, 1, GL_TRUE, projection_matrix.data());
-
-    int32_t cursor_x = start_x;
-    const int32_t cursor_y = start_y;
-    for (const char* ptr = text; *ptr != 0; ptr++) {
+    uint32_t cursor_x = cols;
+    const uint32_t cursor_y = rows;
+    for (const char* ptr = glyphs; *ptr != 0; ptr++, ++cursor_x) {
         const uint8_t glyph_code = static_cast<uint8_t>(*ptr);
         const uint32_t tile_x = glyph_code % atlas_cols_;
         const uint32_t tile_y = glyph_code / atlas_cols_;
@@ -167,12 +177,10 @@ void GlyphRenderer::render_text(const char* text, const int start_x,
         const float max_u = min_u + uv_scale_x;
         const float max_v = min_v + uv_scale_y;
 
-        const float screen_pos_x =
-            static_cast<float>(cursor_x) * static_cast<float>(glyph_width_);
-        const float screen_pos_y =
-            static_cast<float>(cursor_y) * static_cast<float>(glyph_height_);
-        const float tile_width = static_cast<float>(glyph_width_);
-        const float tile_height = static_cast<float>(glyph_height_);
+        const float screen_pos_x = static_cast<float>(cursor_x) * glyph_width_;
+        const float screen_pos_y = static_cast<float>(cursor_y) * glyph_height_;
+        const float tile_width = glyph_width_;
+        const float tile_height = glyph_height_;
 
         // clang-format off
         std::array<std::array<float,FLOATS_PER_VERTEX>, VERTICES_PER_QUAD> vertices = { {
@@ -185,15 +193,9 @@ void GlyphRenderer::render_text(const char* text, const int start_x,
         }};
         // clang-format on
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glBindVertexArray(vao_);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float), vertices.data());
-
+        glBufferSubData(GL_ARRAY_BUFFER, 0,
+                        VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float),
+                        vertices.data());
         glDrawArrays(GL_TRIANGLES, 0, VERTICES_PER_QUAD);
-
-        ++cursor_x;
     }
 }

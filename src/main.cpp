@@ -17,7 +17,7 @@ auto main() -> int {
         return -1;
     }
 
-    if (GlyphRenderer glyph_renderer; !GlyphRenderer::init(FONT_ATLAS)) {
+    if (GlyphRenderer glyph_renderer; !GlyphRenderer::init(FONT_ATLAS, WIDTH, HEIGHT)) {
         renderer.cleanup();
         return -1;
     }
