@@ -1,34 +1,60 @@
+//-----------------------------------------------------------------------------
+// glyph_renderer.ixx
+//-----------------------------------------------------------------------------
 module;
 #include <array>
 #include <cstdint>
+#include <optional>
 
 export module Renderer.Glyph;
 
+//-----------------------------------------------------------------------------
+// Public API
+//-----------------------------------------------------------------------------
 constexpr uint32_t PROJECTION_MATRIX_SIZE = 16;
 
+// Loads a bitmap font atlas and renders strings or full-screen consoles.
 export class GlyphRenderer {
 public:
-    GlyphRenderer() = default;
-    ~GlyphRenderer() = default;
+    // Factory: constructs and initializes a renderer, or returns nullopt on
+    // failure.
+    static auto create(const char* atlas_path, uint32_t screen_width,
+                       uint32_t screen_height) -> std::optional<GlyphRenderer>;
 
-    /// Stub initialization (later: load font atlas, setup VBO/VAO shaders)
-    static auto init(const char* atlas_path, uint32_t screen_width, uint32_t screen_height) -> bool;
-    static auto cleanup() -> void;
+    // non-copyable, movable
+    GlyphRenderer(const GlyphRenderer&) = delete;
+    GlyphRenderer(GlyphRenderer&&) noexcept;
+    auto operator=(GlyphRenderer&&) noexcept -> GlyphRenderer&;
+    ~GlyphRenderer();
 
-    /// Render a string at tile coords (x,y) in characters
-    static void render_text(const char* glyphs, uint32_t cols, uint32_t rows);
+    // Render a null-terminated string at tile coordinates (col, row).
+    void render_text(const char* text, int32_t start_col,
+                     int32_t start_row) const;
+
+    // Batch-render a full buffer of size cols × rows.
+    void render_console(const char* glyphs, uint32_t cols, uint32_t rows) const;
+
+    // Release GPU resources (safe to call multiple times).
+    void cleanup();
+
 private:
-    static uint32_t font_texture_;
-    static uint32_t vao_;
-    static uint32_t vbo_;
-    static int32_t u_projection_loc_;
-    static std::array<float, PROJECTION_MATRIX_SIZE> projection_matrix_;
-    static uint32_t shader_program_;
-    static float glyph_width_;
-    static float glyph_height_;
-    static uint32_t atlas_cols_;
-    static uint32_t atlas_rows_;
+    // private constructor used by factory
+    GlyphRenderer() = default;
+    auto init(const char* atlas_path, uint32_t screen_width,
+              uint32_t screen_height) -> bool;
 
-    static uint32_t screen_width_;
-    static uint32_t screen_height_;
+    // GPU resources and configuration
+    uint32_t                                  font_texture_{0};
+    uint32_t                                  vao_{0};
+    uint32_t                                  vbo_{0};
+    uint32_t                                  shader_program_{0};
+    int32_t                                   u_projection_loc_{-1};
+    std::array<float, PROJECTION_MATRIX_SIZE> projection_matrix_{};
+
+    float    glyph_width_{};
+    float    glyph_height_{};
+    uint32_t atlas_cols_{};
+    uint32_t atlas_rows_{};
+    uint32_t screen_width_{};
+    uint32_t screen_height_{};
 };

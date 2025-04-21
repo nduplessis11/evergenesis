@@ -1,7 +1,7 @@
 module;
-#include <print>
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
+#include <print>
 
 module Renderer.Core;
 
@@ -15,7 +15,7 @@ RenderSystem::~RenderSystem() {
 }
 
 auto RenderSystem::init(const char* title, const int width, const int height)
-    -> bool {
+                         -> bool {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::println(stderr, "Failed to initialize SDL: {}", SDL_GetError());
         return false;
@@ -39,7 +39,8 @@ auto RenderSystem::init(const char* title, const int width, const int height)
 
     gl_context_ = SDL_GL_CreateContext(window_);
     if (gl_context_ == nullptr) {
-        std::println(stderr, "Failed to create OpenGL context: {}",
+        std::println(stderr,
+                     "Failed to create OpenGL context: {}",
                      SDL_GetError());
         return false;
     }
@@ -51,8 +52,8 @@ auto RenderSystem::init(const char* title, const int width, const int height)
     }
 
     // Set up the viewport to match window size
-    int view_width;
-    int view_height;
+    int32_t view_width;
+    int32_t view_height;
     SDL_GetWindowSize(window_, &view_width, &view_height);
     glViewport(0, 0, view_width, view_height);
 

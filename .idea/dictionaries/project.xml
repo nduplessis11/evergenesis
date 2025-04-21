@@ -2,7 +2,11 @@
   <dictionary name="project">
     <words>
       <w>evergenesis</w>
+      <w>nolintbegin</w>
+      <w>nolintend</w>
+      <w>nullopt</w>
       <w>sdlimage</w>
+      <w>verts</w>
     </words>
   </dictionary>
 </component>
