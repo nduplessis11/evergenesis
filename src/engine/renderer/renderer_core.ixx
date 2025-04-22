@@ -1,17 +1,25 @@
+//-----------------------------------------------------------------------------
+// renderer_core.ixx
+//-----------------------------------------------------------------------------
 export module Renderer.Core;
 
-import Engine.Core;
-import Renderer.Glyph;
+import Engine.Core; // For GraphicsContext
+import Renderer.Glyph; // For GlyphRenderer
 
 export class RenderSystem {
 public:
-    explicit RenderSystem(GraphicsContext& graphics_context,
-                          GlyphRenderer&&  glyph_renderer);
+    // Pass the GraphicsContext by reference since it's owned elsewhere
+    RenderSystem(GraphicsContext& graphics_context,
+                 GlyphRenderer&&  glyph_renderer);
+
+    // Let the destructor be default or minimal
     ~RenderSystem();
 
-    void update(float delta_time) const;
+    // Remove 'const' so we can perform rendering operations that change the
+    // state
+    void update(float delta_time);
 
 private:
-    GraphicsContext& graphics_context_;
-    GlyphRenderer    glyph_renderer_;
+    GraphicsContext& graphics_context_; // Not owned
+    GlyphRenderer    glyph_renderer_; // Owned by this system
 };
