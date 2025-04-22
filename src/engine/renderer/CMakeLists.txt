@@ -8,4 +8,5 @@ target_sources(renderer
 
 target_link_libraries(renderer
     PRIVATE vendor
+    PRIVATE core
 )

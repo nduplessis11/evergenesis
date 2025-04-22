@@ -9,8 +9,8 @@ Checks: >
   modernize-use-trailing-return-type,
   modernize-use-auto,
   -readability-avoid-const-params-in-decls,
-  readability-identifier-naming,
   -*-easily-swappable-parameters
+  readability-identifier-naming
 
 WarningsAsErrors: '*'              # change to '*' to turn all warnings into errors
 HeaderFilterRegex: '.*'           # applies checks to all headers

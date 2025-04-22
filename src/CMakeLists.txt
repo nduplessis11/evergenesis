@@ -15,6 +15,8 @@ target_sources(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PRIVATE vendor
     PRIVATE renderer
+    PRIVATE core
 )
 
-add_subdirectory(renderer)
+add_subdirectory(engine/renderer)
+add_subdirectory(engine/core)
