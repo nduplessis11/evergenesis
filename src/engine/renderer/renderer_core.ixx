@@ -13,7 +13,7 @@ public:
                  GlyphRenderer&&  glyph_renderer);
 
     // Let the destructor be default or minimal
-    ~RenderSystem();
+    ~RenderSystem() = default;
 
     // Remove 'const' so we can perform rendering operations that change the
     // state

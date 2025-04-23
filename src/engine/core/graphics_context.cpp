@@ -99,8 +99,8 @@ void GraphicsContext::end_frame() const {
 //------------------------------------------------------------------------------
 // Init
 //------------------------------------------------------------------------------
-auto GraphicsContext::init(const std::string& title, int width, int height)
-                         -> bool {
+auto GraphicsContext::init(const std::string& title, const int width,
+                           const int height) -> bool {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::println(stderr, "Failed to initialize SDL: {}", SDL_GetError());
         return false;
@@ -116,13 +116,13 @@ auto GraphicsContext::init(const std::string& title, int width, int height)
 
     // Create the window with an OpenGL context
     window_ = SDL_CreateWindow(title.c_str(), width, height, SDL_WINDOW_OPENGL);
-    if (!window_) {
+    if (window_ == nullptr) {
         std::println(stderr, "Failed to create window: {}", SDL_GetError());
         return false;
     }
 
     gl_context_ = SDL_GL_CreateContext(window_);
-    if (!gl_context_) {
+    if (gl_context_ == nullptr) {
         std::println(stderr,
                      "Failed to create OpenGL context: {}",
                      SDL_GetError());

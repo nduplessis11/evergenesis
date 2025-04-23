@@ -14,19 +14,19 @@ RenderSystem::RenderSystem(GraphicsContext& graphics_context,
     // but does NOT own graphics_context_.
 }
 
-RenderSystem::~RenderSystem() {
+// RenderSystem::~RenderSystem() {
     // 1. Don't call graphics_context_.cleanup() here;
     //    that's the job of whoever *owns* the GraphicsContext.
     // 2. No need to call glyph_renderer_.cleanup() — the GlyphRenderer
     //    destructor calls cleanup() automatically.
-}
+// }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void RenderSystem::update(float /*delta_time*/) {
     // Clear screen to a dark gray
-    constexpr Color DARK_GREY_COLOR{0.1f, 0.1f, 0.1f, 1.0f};
+    constexpr Color DARK_GREY_COLOR{.r=0.1F, .g=0.1F, .b=0.1F, .a=1.0F};
 
-    graphics_context_.begin_frame(DARK_GREY_COLOR);
+    GraphicsContext::begin_frame(DARK_GREY_COLOR);
 
     // Example usage
     glyph_renderer_.render_text("hello", 1, 1);

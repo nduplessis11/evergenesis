@@ -16,8 +16,9 @@ add_subdirectory(glm)
 add_library(vendor INTERFACE)
 
 target_link_libraries(vendor
-        INTERFACE SDL3::SDL3
-        INTERFACE SDL3_image::SDL3_image
-        INTERFACE glad_gl_core_46
-        INTERFACE glm::glm
+    INTERFACE
+        SDL3::SDL3
+        SDL3_image::SDL3_image
+        glad_gl_core_46
+        glm::glm
 )
