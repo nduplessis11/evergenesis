@@ -179,12 +179,7 @@ auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
     const auto width  = static_cast<float>(screen_width_);
     const auto height = static_cast<float>(screen_height_);
 
-    projection_matrix_ = glm::ortho(0.0F,
-                                    width,
-                                    height,
-                                    0.0F,
-                                    -1.0F,
-                                    1.0F);
+    projection_matrix_ = glm::ortho(0.0F, width, height, 0.0F, -1.0F, 1.0F);
 
     return true;
 }
@@ -211,36 +206,58 @@ void GlyphRenderer::cleanup() {
 //-----------------------------------------------------------------------------
 // Rendering: Single-string and Batch
 //-----------------------------------------------------------------------------
-void GlyphRenderer::render_text(const char* text, const int32_t start_col,
-                                const int32_t start_row) const {
+auto GlyphRenderer::render_text(const char* text, const int32_t start_col,
+                                const int32_t start_row) const -> void {
     glUseProgram(shader_program_);
+
+    // Bind the VAO/VBO for drawing quads
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+
+    // Activate texture unit 0 and bind the font atlas
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, font_texture_);
+
+    // Enable blending for alpha transparency (font antialiasing)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Upload the orthographic projection matrix to the shader
     glUniformMatrix4fv(u_projection_loc_,
                        1,
                        GL_FALSE,
                        glm::value_ptr(projection_matrix_));
 
+    // Compute how much UV space each glyph occupies
+    // atlas_cols_ and atlas_rows_ are the number of glyphs
+    // horizontally/vertically
     const float    uv_scale_x = 1.F / static_cast<float>(atlas_cols_);
     const float    uv_scale_y = 1.F / static_cast<float>(atlas_rows_);
-    uint32_t       col_idx    = start_col;
-    const uint32_t row_idx    = start_row;
+    uint32_t       col_idx    = start_col; // Current column on screen
+    const uint32_t row_idx    = start_row; // Fixed starting row
 
+    // Iterate over each character in the null-terminated string
     for (const char* ptr = text; *ptr != 0; ++ptr, ++col_idx) {
-        const auto     glyph_code = static_cast<uint8_t>(*ptr);
+        // Get the character code (0-255)
+        const auto glyph_code = static_cast<uint8_t>(*ptr);
+        // Determine the glyph's tile position in the atlas grid
         const uint32_t tile_x_idx = glyph_code % atlas_cols_;
         const uint32_t tile_y_idx = glyph_code / atlas_cols_;
-        const float    min_u      = static_cast<float>(tile_x_idx) * uv_scale_x;
-        const float    min_v      = static_cast<float>(tile_y_idx) * uv_scale_y;
-        const float    max_u      = min_u + uv_scale_x;
-        const float    max_v      = min_v + uv_scale_y;
-        const float    pos_x      = static_cast<float>(col_idx) * glyph_width_;
-        const float    pos_y      = static_cast<float>(row_idx) * glyph_height_;
 
+        // Calculate UV coordinates in normalized [0,1] space
+        const float min_u = static_cast<float>(tile_x_idx) * uv_scale_x;
+        const float min_v = static_cast<float>(tile_y_idx) * uv_scale_y;
+        const float max_u = min_u + uv_scale_x;
+        const float max_v = min_v + uv_scale_y;
+
+        // Calculate the screen position of the glyph in pixels
+        const float pos_x = static_cast<float>(col_idx) * glyph_width_;
+        const float pos_y = static_cast<float>(row_idx) * glyph_height_;
+
+        // Build the 6 vertices (2 triangles) for the quad:
+        // Each vertex has 4 floats: x, y, u, v
+        // Triangle 1: top-left, bottom-left, bottom-right
+        // Triangle 2: top-left, bottom-right, top-right
         // clang-format off
         std::array<std::array<float, FLOATS_PER_VERTEX>, VERTICES_PER_QUAD> verts = {{
             {{ pos_x,                 pos_y + glyph_height_, min_u, max_v }},
@@ -252,6 +269,7 @@ void GlyphRenderer::render_text(const char* text, const int32_t start_col,
         }};
         // clang-format on
 
+        // Update the VBO with our quad's vertex data
         glBufferSubData(GL_ARRAY_BUFFER,
                         0,
                         VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float),
@@ -263,50 +281,78 @@ void GlyphRenderer::render_text(const char* text, const int32_t start_col,
 void GlyphRenderer::render_console(const char* glyphs, const uint32_t cols,
                                    const uint32_t rows) const {
     glUseProgram(shader_program_);
+
+    // Bind the VAO/VBO for drawing batches of quads
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+
+    // Activate and bind the font atlas texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, font_texture_);
+
+    // Enable blending for transparency
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Upload the orthographic projection matrix to the shader
     glUniformMatrix4fv(u_projection_loc_,
                        1,
                        GL_FALSE,
                        glm::value_ptr(projection_matrix_));
 
-    const float        uv_step_x = 1.F / static_cast<float>(atlas_cols_);
-    const float        uv_step_y = 1.F / static_cast<float>(atlas_rows_);
-    const float        tile_w    = glyph_width_;
-    const float        tile_h    = glyph_height_;
+    // Compute UV step per glyph in atlas
+    const float uv_step_x = 1.F / static_cast<float>(atlas_cols_);
+    const float uv_step_y = 1.F / static_cast<float>(atlas_rows_);
+
+    // Tile size in pixels
+    const float tile_w = glyph_width_;
+    const float tile_h = glyph_height_;
+
+    // Pre-allocate the vertex array for the whole console
     std::vector<float> verts;
     verts.reserve(static_cast<size_t>(cols) * rows * VERTICES_PER_QUAD *
                   FLOATS_PER_VERTEX);
 
+    // Loop rows then columns to fill the screen in text grid order
     for (uint32_t row_idx = 0; row_idx < rows; ++row_idx) {
         for (uint32_t col_idx = 0; col_idx < cols; ++col_idx) {
+            // Get glyph code from the flat array
             const auto glyph_code = static_cast<uint8_t>(
                                      glyphs[(row_idx * cols) + col_idx]);
+
+            // Compute tile indices in atlas
             const uint32_t tile_x_idx = glyph_code % atlas_cols_;
             const uint32_t tile_y_idx = glyph_code / atlas_cols_;
-            const float    min_u = static_cast<float>(tile_x_idx) * uv_step_x;
-            const float    min_v = static_cast<float>(tile_y_idx) * uv_step_y;
-            const float    max_u = min_u + uv_step_x;
-            const float    max_v = min_v + uv_step_y;
-            const float    pos_x = static_cast<float>(col_idx) * tile_w;
-            const float    pos_y = static_cast<float>(row_idx) * tile_h;
 
+            // Compute UV boundaries for this glyph
+            const float min_u = static_cast<float>(tile_x_idx) * uv_step_x;
+            const float min_v = static_cast<float>(tile_y_idx) * uv_step_y;
+            const float max_u = min_u + uv_step_x;
+            const float max_v = min_v + uv_step_y;
+
+            // Compute screen position of the glyph
+            const float pos_x = static_cast<float>(col_idx) * tile_w;
+            const float pos_y = static_cast<float>(row_idx) * tile_h;
+
+            // Build the 6 vertices (2 triangles) for the quad:
+            // clang-format off
             verts.insert(verts.end(),
-                         {pos_x,          pos_y + tile_h, min_u, max_v,
+                         // x,            y,              u,     v
+                         {pos_x,      pos_y + tile_h, min_u, max_v,
                           pos_x,          pos_y,          min_u, min_v,
                           pos_x + tile_w, pos_y,          max_u, min_v,
                           pos_x,          pos_y + tile_h, min_u, max_v,
                           pos_x + tile_w, pos_y,          max_u, min_v,
                           pos_x + tile_w, pos_y + tile_h, max_u, max_v});
+            // clang-format on
         }
     }
 
+    // Upload entire batch vertex data to GPU
     const auto size = static_cast<GLsizeiptr>(verts.size() * sizeof(float));
     glBufferData(GL_ARRAY_BUFFER, size, verts.data(), GL_DYNAMIC_DRAW);
+
+    // Draw all quads in one call (count = total vertices)
     const auto count = static_cast<GLsizei>(verts.size() / FLOATS_PER_VERTEX);
     glDrawArrays(GL_TRIANGLES, 0, count);
 }
