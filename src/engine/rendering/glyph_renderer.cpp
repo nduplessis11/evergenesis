@@ -180,8 +180,8 @@ auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
     const auto height = static_cast<float>(screen_height_);
 
     projection_matrix_ = glm::ortho(0.0F,
-                                    static_cast<float>(width),
-                                    static_cast<float>(height),
+                                    width,
+                                    height,
                                     0.0F,
                                     -1.0F,
                                     1.0F);

@@ -10,7 +10,7 @@ RenderSystem::RenderSystem(GraphicsContext& graphics_context,
                            GlyphRenderer&&  glyph_renderer)
     : graphics_context_(graphics_context),
       glyph_renderer_(std::move(glyph_renderer)),
-      tile_map_renderer_(glyph_renderer) {
+      tile_map_renderer_(glyph_renderer_) {
     // The RenderSystem now *owns* glyph_renderer_
     // but does NOT own graphics_context_.
 }
