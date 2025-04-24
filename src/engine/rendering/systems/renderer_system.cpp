@@ -27,7 +27,7 @@ void RenderSystem::update(float /*delta_time*/) {
     GraphicsContext::begin_frame(DARK_GREY_COLOR);
 
     // Example usage
-    if (false) {
+    if (world_ != nullptr) {
         tile_map_renderer_.update(*world_);
     } else {
         glyph_renderer_.render_text("hello", 1, 1);
