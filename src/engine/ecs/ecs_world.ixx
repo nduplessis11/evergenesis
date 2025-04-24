@@ -37,6 +37,10 @@ public:
     template <typename C1, typename C2, typename Func>
     auto for_each(Func func) -> void;
 
+    // Return all entities that currently have a component of type C
+    template <typename C>
+    [[nodiscard]] auto entities_with() const -> std::vector<Entity>;
+
 private:
     // Helper: get the storage component for type C, or nullptr
     template <typename C> auto get_storage() -> ComponentStorage<C>*;
@@ -179,6 +183,17 @@ auto EcsWorld::for_each(Func func) -> void {
             }
         }
     }
+}
+
+template <typename C>
+auto EcsWorld::entities_with() const -> std::vector<Entity> {
+    const auto iter = component_storages_.find(std::type_index(typeid(C)));
+    if (iter == component_storages_.end()) {
+        return {}; // No storage for this component type
+    }
+
+    const auto* storage = static_cast<ComponentStorage<C>*>(iter->second.get());
+    return storage->entities_with_component();
 }
 
 template <typename C> auto EcsWorld::get_storage() -> ComponentStorage<C>* {

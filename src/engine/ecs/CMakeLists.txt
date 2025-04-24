@@ -3,7 +3,6 @@ target_sources(engine
             entity.ixx
             component_storage.ixx
             ecs_world.ixx
-            components/tile_map.ixx
         PRIVATE
             entity.cpp
             ecs_world.cpp

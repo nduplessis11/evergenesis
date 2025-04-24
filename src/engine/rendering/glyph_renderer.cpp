@@ -12,7 +12,7 @@ module;
 #include <print>
 #include <vector>
 
-module Renderer.Glyph;
+module Engine.Rendering.GlyphRenderer;
 
 //-----------------------------------------------------------------------------
 // Module-level constants

@@ -4,22 +4,20 @@
 module;
 #include <utility> // for std::move
 
-module Renderer.Core;
+module Engine.Rendering.Systems.Core;
 
 RenderSystem::RenderSystem(GraphicsContext& graphics_context,
                            GlyphRenderer&&  glyph_renderer)
     : graphics_context_(graphics_context),
-      glyph_renderer_(std::move(glyph_renderer)) {
+      glyph_renderer_(std::move(glyph_renderer)),
+      tile_map_renderer_(glyph_renderer) {
     // The RenderSystem now *owns* glyph_renderer_
     // but does NOT own graphics_context_.
 }
 
-// RenderSystem::~RenderSystem() {
-    // 1. Don't call graphics_context_.cleanup() here;
-    //    that's the job of whoever *owns* the GraphicsContext.
-    // 2. No need to call glyph_renderer_.cleanup() — the GlyphRenderer
-    //    destructor calls cleanup() automatically.
-// }
+void RenderSystem::set_world(EcsWorld& world) {
+    world_ = &world;
+}
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void RenderSystem::update(float /*delta_time*/) {
@@ -29,7 +27,11 @@ void RenderSystem::update(float /*delta_time*/) {
     GraphicsContext::begin_frame(DARK_GREY_COLOR);
 
     // Example usage
-    glyph_renderer_.render_text("hello", 1, 1);
+    if (false) {
+        tile_map_renderer_.update(*world_);
+    } else {
+        glyph_renderer_.render_text("hello", 1, 1);
+    }
 
     graphics_context_.end_frame();
 }

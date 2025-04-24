@@ -2,7 +2,7 @@ export module Game.World.Dungeon.Glyphs;
 
 import Game.World.Dungeon;
 
-export inline char glyph_for_tile(const TileType tile) {
+export inline auto glyph_for_tile(const TileType tile) -> char {
     switch (tile) {
     case TileType::Floor:
         return '.';

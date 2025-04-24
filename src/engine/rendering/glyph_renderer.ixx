@@ -7,7 +7,7 @@ module;
 #include <cstdint>
 #include <optional>
 
-export module Renderer.Glyph;
+export module Engine.Rendering.GlyphRenderer;
 
 //-----------------------------------------------------------------------------
 // Public API

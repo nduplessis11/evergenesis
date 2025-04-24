@@ -1,9 +1,9 @@
 // src/engine/ecs/components/tile_map.ixx
 module;
-#include <vector>;
-#include <cstdint>;
+#include <vector>
+#include <cstdint>
 
-export module Engine.Ecs.Components.TileMap;
+export module Engine.Rendering.Components.TileMap;
 
 // A completely generic grid of glyphs.
 // Engine code only depends on its own modules.

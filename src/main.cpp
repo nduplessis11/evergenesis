@@ -8,15 +8,14 @@
 #include <print>
 #include <utility>
 
-// These 'import' statements depend on your build setup and how you're using C++20 modules.
-// Adjust if needed.
-import Renderer.Core;
-import Renderer.Glyph;
-import Engine.Core;
-import Engine.Ecs.World;
-import Engine.Ecs.Entity;
-import Game.World.Dungeon;
-import Game.Components.DungeonMap;
+import Engine.Rendering.Systems.Core;    // RenderSystem
+import Engine.Rendering.GlyphRenderer;   // GlyphRenderer
+import Engine.Core;                      // GraphicsContext
+import Engine.Ecs.World;                 // EcsWorld
+import Engine.Ecs.Entity;                // Entity
+import Game.World.Dungeon;              // Dungeon class
+import Game.Components.DungeonMap;      // DungeonMap component
+import Game.World.Dungeon.Systems.DungeonToTileMap;
 
 constexpr int         SCREEN_WIDTH    = 800;
 constexpr int         SCREEN_HEIGHT   = 600;
@@ -31,8 +30,10 @@ auto main() -> int
     dungeon.generate();
 
     EcsWorld world;
-    Entity dungeon_entity = world.create_entity();
-    world.add_component<DungeonMap>(dungeon_entity, &dungeon);
+    DungeonToTileMapSystem map_system(dungeon);
+    map_system.initialize(world);
+    // Entity dungeon_entity = world.create_entity();
+    // world.add_component<DungeonMap>(dungeon_entity, &dungeon);
 
     //---------------------------------------------------------------------
     // 1) Create the GraphicsContext
@@ -44,7 +45,6 @@ auto main() -> int
         return -1; // failed to init SDL/window
     }
 
-    // Move the optional's GraphicsContext into a local variable
     GraphicsContext graphics_context = std::move(*maybe_graphics_context);
 
     //---------------------------------------------------------------------
@@ -54,17 +54,15 @@ auto main() -> int
         FONT_ATLAS_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
     );
     if (!maybe_glyph_renderer) {
-        // If glyph init fails, we bail. The graphics_context destructor
-        // will clean up the window/context automatically.
         return -1;
     }
     GlyphRenderer glyph_renderer = std::move(*maybe_glyph_renderer);
 
     //---------------------------------------------------------------------
-    // 3) Create the RenderSystem (or any other rendering pipeline object)
+    // 3) Create and hook up the ECS-powered RenderSystem
     //---------------------------------------------------------------------
-    // Remove 'const' so we can call 'update()' freely.
     RenderSystem core_renderer(graphics_context, std::move(glyph_renderer));
+    core_renderer.set_world(world);  // ← Pass the ECS world to the renderer
 
     //---------------------------------------------------------------------
     // 4) Main Game / App Loop
@@ -85,9 +83,6 @@ auto main() -> int
     //---------------------------------------------------------------------
     // 5) Cleanup
     //---------------------------------------------------------------------
-    // If your GraphicsContext destructor does *not* call SDL_Quit(),
-    // do it here to clean up SDL for the entire application.
     SDL_Quit();
-
     return 0;
 }

@@ -6,4 +6,4 @@ target_link_libraries(engine
 
 add_subdirectory(core)
 add_subdirectory(ecs)
-add_subdirectory(systems/renderer)
+add_subdirectory(rendering)
