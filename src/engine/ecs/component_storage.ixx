@@ -69,6 +69,10 @@ public:
         entity_to_index_[entity.index] = -1;
     }
 
+    [[nodiscard]] auto entities_with_component() const -> const std::vector<Entity>& {
+        return entities_;
+    }
+
 private:
     std::vector<Component> components_;
     std::vector<Entity>    entities_;
