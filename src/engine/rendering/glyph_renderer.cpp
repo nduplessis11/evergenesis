@@ -228,9 +228,16 @@ auto GlyphRenderer::render_text(const char* text, const int32_t start_col,
                        GL_FALSE,
                        glm::value_ptr(projection_matrix_));
 
+    // ------------------------------------------------------------------------
     // Compute how much UV space each glyph occupies
-    // atlas_cols_ and atlas_rows_ are the number of glyphs
-    // horizontally/vertically
+    // ------------------------------------------------------------------------
+    // atlas_cols_ --------> number of glyphs per row in the PNG (e.g., 32)
+    // atlas_rows_ --------> number of glyph-rows in the PNG (e.g., 8)
+    // tile indices -------> atlas (texture) coordinates
+    // col_idx / row_idx --> screen (pixel) coordinates
+    // uv_scale_x ---------> width (normalized UV) of one glyph cell in texture
+    // uv_scale_y ---------> height (normalized UV) of one glyph cell in texture
+    //-------------------------------------------------------------------------
     const float    uv_scale_x = 1.F / static_cast<float>(atlas_cols_);
     const float    uv_scale_y = 1.F / static_cast<float>(atlas_rows_);
     uint32_t       col_idx    = start_col; // Current column on screen
@@ -240,6 +247,7 @@ auto GlyphRenderer::render_text(const char* text, const int32_t start_col,
     for (const char* ptr = text; *ptr != 0; ++ptr, ++col_idx) {
         // Get the character code (0-255)
         const auto glyph_code = static_cast<uint8_t>(*ptr);
+
         // Determine the glyph's tile position in the atlas grid
         const uint32_t tile_x_idx = glyph_code % atlas_cols_;
         const uint32_t tile_y_idx = glyph_code / atlas_cols_;
