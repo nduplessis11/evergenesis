@@ -6,9 +6,8 @@ module;
 module Game.World.Dungeon;
 
 Dungeon::Dungeon(const DungeonSize dimensions)
-    : width_(dimensions.width), height_(dimensions.height) {
-    tiles_.reserve(width_ * height_);
-}
+    : width_(dimensions.width), height_(dimensions.height),
+      tiles_(dimensions.width * dimensions.height, TileType::Unknown) {}
 
 void Dungeon::generate() {
     // Example: fill the entire dungeon with Floor except boundary with Walls

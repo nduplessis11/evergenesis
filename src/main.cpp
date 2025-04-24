@@ -13,6 +13,10 @@
 import Renderer.Core;
 import Renderer.Glyph;
 import Engine.Core;
+import Engine.Ecs.World;
+import Engine.Ecs.Entity;
+import Game.World.Dungeon;
+import Game.Components.DungeonMap;
 
 constexpr int         SCREEN_WIDTH    = 800;
 constexpr int         SCREEN_HEIGHT   = 600;
@@ -20,6 +24,16 @@ static constexpr auto FONT_ATLAS_PATH = "assets/fonts/cp437_8x16.png";
 
 auto main() -> int
 {
+    //-------------------------------------------------------------------------
+    // INIT DATA
+    //-------------------------------------------------------------------------
+    Dungeon dungeon({ .width = 80, .height = 25 });
+    dungeon.generate();
+
+    EcsWorld world;
+    Entity dungeon_entity = world.create_entity();
+    world.add_component<DungeonMap>(dungeon_entity, &dungeon);
+
     //---------------------------------------------------------------------
     // 1) Create the GraphicsContext
     //---------------------------------------------------------------------
