@@ -14,13 +14,9 @@ target_sources(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE vendor
-    PRIVATE renderer
-    PRIVATE core
-    PRIVATE ecs
+    PRIVATE engine
     PRIVATE game
 )
 
-add_subdirectory(engine/renderer)
-add_subdirectory(engine/core)
-add_subdirectory(engine/ecs)
+add_subdirectory(engine)
 add_subdirectory(game)
