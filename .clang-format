@@ -12,7 +12,8 @@ UseTab: Never            # Boost typically avoids tabs in code.
 AccessModifierOffset: -4 # Keep 'public:', 'protected:', 'private:' aligned with class definition.
 NamespaceIndentation: None
 IndentCaseLabels: false
-ContinuationIndentWidth: 25
+ContinuationIndentWidth: 8
+AlignAfterOpenBracket: DontAlign
 
 # Column wrapping
 ColumnLimit: 80          # Historically, many Boost libraries aim for ~80 columns.

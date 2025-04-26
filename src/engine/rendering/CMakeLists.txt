@@ -4,6 +4,7 @@ target_sources(engine
         systems/tile_map_render_system.ixx
         glyph_renderer.ixx
         components/tile_map.ixx
+        components/glyph_renderable.ixx
     PRIVATE
         systems/renderer_system.cpp
         systems/tile_map_render_system.cpp

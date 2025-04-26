@@ -14,15 +14,17 @@ module;
 
 module Engine.Rendering.GlyphRenderer;
 
+import Engine.Config.TileConfig;
+
 //-----------------------------------------------------------------------------
 // Module-level constants
 //-----------------------------------------------------------------------------
-constexpr float    GLYPH_WIDTH       = 8.F;
-constexpr float    GLYPH_HEIGHT      = 16.F;
-constexpr uint32_t ATLAS_COLS        = 32;
-constexpr uint32_t ATLAS_ROWS        = 8;
-constexpr size_t   VERTICES_PER_QUAD = 6;
-constexpr size_t   FLOATS_PER_VERTEX = 4;
+static constexpr float    GLYPH_WIDTH       = static_cast<float>(TILE_WIDTH);
+static constexpr float    GLYPH_HEIGHT      = static_cast<float>(TILE_HEIGHT);
+static constexpr uint32_t ATLAS_COLS        = 32;
+static constexpr uint32_t ATLAS_ROWS        = 8;
+static constexpr size_t   VERTICES_PER_QUAD = 6;
+static constexpr size_t   FLOATS_PER_VERTEX = 4;
 
 //-----------------------------------------------------------------------------
 // Internal Helpers

@@ -47,7 +47,7 @@ private:
 
     EntityManager entity_manager_;
     std::unordered_map<std::type_index, std::unique_ptr<IComponentStorage>>
-                             component_storages_;
+            component_storages_;
 };
 
 //------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ auto EcsWorld::add_component(Entity entity, Args&&... args) -> C& {
     // storage:
     //    We just created a ComponentStorage<C>, so this cast is safe.
     auto* storage = static_cast<ComponentStorage<C>*>(
-                             component_storages_[type_id].get());
+            component_storages_[type_id].get());
 
     // 5) Insert the component instance in‐place, forwarding constructor args:
     //    std::forward<Args>(args)... expands to either an lvalue or rvalue
@@ -101,7 +101,7 @@ auto EcsWorld::add_component(Entity entity, Args&&... args) -> C& {
 template <typename C> void EcsWorld::remove_component(Entity entity) {
     const auto type_id = std::type_index(typeid(C));
     if (const auto iter = component_storages_.find(type_id);
-        iter != component_storages_.end()) {
+            iter != component_storages_.end()) {
         static_cast<ComponentStorage<C>*>(iter->second.get())->remove(entity);
     }
 }
@@ -118,7 +118,7 @@ auto EcsWorld::has_component(Entity entity) const -> bool {
     //    - find() gives us the iterator directly, so we avoid a second lookup.
     //    This keeps it to a single hash/map probe instead of two.
     if (const auto iter = component_storages_.find(type_id);
-        iter != component_storages_.end()) {
+            iter != component_storages_.end()) {
         // 3) Cast back to the concrete storage type so we can call get(entity)
         auto* storage = static_cast<ComponentStorage<C>*>(iter->second.get());
 
@@ -133,8 +133,7 @@ auto EcsWorld::has_component(Entity entity) const -> bool {
 template <typename C> auto EcsWorld::get_component(const Entity entity) -> C& {
     assert(has_component<C>(entity) && "Missing component");
     auto* storage = static_cast<ComponentStorage<C>*>(
-                             component_storages_.at(std::type_index(typeid(C)))
-                                                      .get());
+            component_storages_.at(std::type_index(typeid(C))).get());
     return *storage->get(entity);
 }
 
@@ -166,7 +165,7 @@ auto EcsWorld::for_each(Func func) -> void {
                 // 6a) Both components exist: retrieve them and invoke the
                 // callback
                 func(*storage1->get(entity), // C1&
-                     *storage2->get(entity) // C2&
+                        *storage2->get(entity) // C2&
                 );
             }
         }
@@ -178,7 +177,7 @@ auto EcsWorld::for_each(Func func) -> void {
                 // 6b) Both components exist: retrieve them and invoke the
                 // callback
                 func(*storage1->get(entity), // C1&
-                     *storage2->get(entity) // C2&
+                        *storage2->get(entity) // C2&
                 );
             }
         }
@@ -199,7 +198,6 @@ auto EcsWorld::entities_with() const -> std::vector<Entity> {
 template <typename C> auto EcsWorld::get_storage() -> ComponentStorage<C>* {
     const auto iter = component_storages_.find(std::type_index(typeid(C)));
     return iter == component_storages_.end()
-                                    ? nullptr
-                                    : static_cast<ComponentStorage<C>*>(
-                                                               iter->second.get());
+                   ? nullptr
+                   : static_cast<ComponentStorage<C>*>(iter->second.get());
 }

@@ -8,39 +8,38 @@
 #include <print>
 #include <utility>
 
-import Engine.Rendering.Systems.Core;    // RenderSystem
-import Engine.Rendering.GlyphRenderer;   // GlyphRenderer
-import Engine.Core;                      // GraphicsContext
-import Engine.Ecs.World;                 // EcsWorld
-import Engine.Ecs.Entity;                // Entity
-import Game.World.Dungeon;              // Dungeon class
-import Game.Components.DungeonMap;      // DungeonMap component
+import Engine.Rendering.Systems.Core; // RenderSystem
+import Engine.Rendering.GlyphRenderer; // GlyphRenderer
+import Engine.Core; // GraphicsContext
+import Engine.Ecs.World; // EcsWorld
+import Engine.Ecs.Entity; // Entity
+import Game.World.Dungeon; // Dungeon class
 import Game.World.Dungeon.Systems.DungeonToTileMap;
+import Game.Actors.PlayerFactory;
 
 constexpr int         SCREEN_WIDTH    = 800;
 constexpr int         SCREEN_HEIGHT   = 600;
 static constexpr auto FONT_ATLAS_PATH = "assets/fonts/cp437_8x16.png";
 
-auto main() -> int
-{
+auto main() -> int {
     //-------------------------------------------------------------------------
     // INIT DATA
     //-------------------------------------------------------------------------
-    Dungeon dungeon({ .width = 80, .height = 25 });
+    Dungeon dungeon({.width = 80, .height = 25});
     dungeon.generate();
 
-    EcsWorld world;
+    EcsWorld               world;
     DungeonToTileMapSystem map_system(dungeon);
     map_system.initialize(world);
-    // Entity dungeon_entity = world.create_entity();
-    // world.add_component<DungeonMap>(dungeon_entity, &dungeon);
+
+    // spawn player at tile (2,2)
+    Entity player = create_player(world, 2, 2);
 
     //---------------------------------------------------------------------
     // 1) Create the GraphicsContext
     //---------------------------------------------------------------------
     auto maybe_graphics_context = GraphicsContext::create(
-        "Sandbox", SCREEN_WIDTH, SCREEN_HEIGHT
-    );
+                             "Sandbox", SCREEN_WIDTH, SCREEN_HEIGHT);
     if (!maybe_graphics_context) {
         return -1; // failed to init SDL/window
     }
@@ -51,8 +50,7 @@ auto main() -> int
     // 2) Create the GlyphRenderer
     //---------------------------------------------------------------------
     auto maybe_glyph_renderer = GlyphRenderer::create(
-        FONT_ATLAS_PATH, SCREEN_WIDTH, SCREEN_HEIGHT
-    );
+                             FONT_ATLAS_PATH, SCREEN_WIDTH, SCREEN_HEIGHT);
     if (!maybe_glyph_renderer) {
         return -1;
     }
@@ -62,7 +60,7 @@ auto main() -> int
     // 3) Create and hook up the ECS-powered RenderSystem
     //---------------------------------------------------------------------
     RenderSystem core_renderer(graphics_context, std::move(glyph_renderer));
-    core_renderer.set_world(world);  // ← Pass the ECS world to the renderer
+    core_renderer.set_world(world);
 
     //---------------------------------------------------------------------
     // 4) Main Game / App Loop
