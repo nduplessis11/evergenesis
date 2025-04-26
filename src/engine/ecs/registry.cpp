@@ -1,13 +1,13 @@
 module;
 #include <ranges>
 
-module Engine.Ecs.World;
+module Engine.Ecs.Registry;
 
-auto EcsWorld::create_entity() -> Entity {
+auto Registry::create_entity() -> Entity {
     return entity_manager_.create_entity();
 }
 
-void EcsWorld::destroy_entity(const Entity entity) {
+void Registry::destroy_entity(const Entity entity) {
     if (!entity_manager_.is_alive(entity)) {
         return;
     }

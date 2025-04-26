@@ -4,12 +4,12 @@ module;
 #include <typeindex>
 #include <unordered_map>
 
-export module Engine.Ecs.World;
+export module Engine.Ecs.Registry;
 
 import Engine.Ecs.Entity;
 import Engine.Ecs.ComponentStorage;
 
-export class EcsWorld {
+export class Registry {
 public:
     // Create or recycle an entity
     auto create_entity() -> Entity;
@@ -61,7 +61,7 @@ template <typename C, typename... Args>
 //     which collapses to U& (an lvalue reference).
 //   * If you pass an rvalue, Args deduces to U, and the parameter type is U&&.
 //   Perfect forwarding via std::forward preserves the original value category.
-auto EcsWorld::add_component(Entity entity, Args&&... args) -> C& {
+auto Registry::add_component(Entity entity, Args&&... args) -> C& {
     // 1) Sanity check: entity must be alive. In a debug build this aborts
     //    if it’s not, helping catch errors early.
     assert(entity_manager_.is_alive(entity) && "Entity must be alive");
@@ -98,7 +98,7 @@ auto EcsWorld::add_component(Entity entity, Args&&... args) -> C& {
     return *storage->get(entity);
 }
 
-template <typename C> void EcsWorld::remove_component(Entity entity) {
+template <typename C> void Registry::remove_component(Entity entity) {
     const auto type_id = std::type_index(typeid(C));
     if (const auto iter = component_storages_.find(type_id);
             iter != component_storages_.end()) {
@@ -107,7 +107,7 @@ template <typename C> void EcsWorld::remove_component(Entity entity) {
 }
 
 template <typename C>
-auto EcsWorld::has_component(Entity entity) const -> bool {
+auto Registry::has_component(Entity entity) const -> bool {
     // 1) Compute the runtime key for this component type once
     const auto type_id = std::type_index(typeid(C));
 
@@ -130,7 +130,7 @@ auto EcsWorld::has_component(Entity entity) const -> bool {
     return false;
 }
 
-template <typename C> auto EcsWorld::get_component(const Entity entity) -> C& {
+template <typename C> auto Registry::get_component(const Entity entity) -> C& {
     assert(has_component<C>(entity) && "Missing component");
     auto* storage = static_cast<ComponentStorage<C>*>(
             component_storages_.at(std::type_index(typeid(C))).get());
@@ -138,7 +138,7 @@ template <typename C> auto EcsWorld::get_component(const Entity entity) -> C& {
 }
 
 template <typename C1, typename C2, typename Func>
-auto EcsWorld::for_each(Func func) -> void {
+auto Registry::for_each(Func func) -> void {
     // 1) Fetch the two component storages; get_storage returns nullptr if
     //    that component type has never been added.
     auto* storage1 = get_storage<C1>();
@@ -185,7 +185,7 @@ auto EcsWorld::for_each(Func func) -> void {
 }
 
 template <typename C>
-auto EcsWorld::entities_with() const -> std::vector<Entity> {
+auto Registry::entities_with() const -> std::vector<Entity> {
     const auto iter = component_storages_.find(std::type_index(typeid(C)));
     if (iter == component_storages_.end()) {
         return {}; // No storage for this component type
@@ -195,7 +195,7 @@ auto EcsWorld::entities_with() const -> std::vector<Entity> {
     return storage->entities_with_component();
 }
 
-template <typename C> auto EcsWorld::get_storage() -> ComponentStorage<C>* {
+template <typename C> auto Registry::get_storage() -> ComponentStorage<C>* {
     const auto iter = component_storages_.find(std::type_index(typeid(C)));
     return iter == component_storages_.end()
                    ? nullptr

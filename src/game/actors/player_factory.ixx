@@ -6,7 +6,7 @@ module; // global module fragment for includes
 
 export module Game.Actors.PlayerFactory;
 
-import Engine.Ecs.World; // EcsWorld
+import Engine.Ecs.Registry; // EcsWorld
 import Engine.Ecs.Entity; // Entity
 
 import Engine.Physics.Components.Transform; // Transform(glm::vec2)
@@ -17,7 +17,7 @@ import Engine.Rendering.Components.GlyphRenderable; // GlyphRenderable(char)
 
 import Engine.Config.TileConfig; // TILE_WIDTH, TILE_HEIGHT
 
-export auto create_player(EcsWorld& world, const int tile_x, const int tile_y)
+export auto create_player(Registry& world, const int tile_x, const int tile_y)
                          -> Entity {
     const float start_x = static_cast<float>(tile_x) * TILE_WIDTH;
     const float start_y = static_cast<float>(tile_y) * TILE_HEIGHT;

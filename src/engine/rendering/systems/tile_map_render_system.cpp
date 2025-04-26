@@ -9,7 +9,7 @@ module Engine.Rendering.Systems.TileMap;
 TileMapRenderSystem::TileMapRenderSystem(GlyphRenderer& glyph_renderer)
     : glyph_renderer_(glyph_renderer) {}
 
-auto TileMapRenderSystem::update(EcsWorld& world) const -> void {
+auto TileMapRenderSystem::update(Registry& world) const -> void {
     // Find all entities with a TileMap component
     for (const auto entity : world.entities_with<TileMap>()) {
         auto& [glyphs, cols, rows] = world.get_component<TileMap>(entity);

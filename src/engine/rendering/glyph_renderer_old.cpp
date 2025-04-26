@@ -40,8 +40,7 @@ static auto compile_shader(const uint32_t type, const char* src) -> uint32_t {
 // Factory and Special Members
 //-----------------------------------------------------------------------------
 auto GlyphRenderer::create(const char* atlas_path, const uint32_t screen_width,
-                           const uint32_t screen_height)
-                         -> std::optional<GlyphRenderer> {
+        const uint32_t screen_height) -> std::optional<GlyphRenderer> {
     GlyphRenderer instance;
     if (!instance.init(atlas_path, screen_width, screen_height)) {
         return std::nullopt;
@@ -67,7 +66,7 @@ GlyphRenderer::GlyphRenderer(GlyphRenderer&& other) noexcept
 }
 
 auto GlyphRenderer::operator=(GlyphRenderer&& other) noexcept
-                         -> GlyphRenderer& {
+        -> GlyphRenderer& {
     if (this != &other) {
         cleanup();
         font_texture_      = other.font_texture_;
@@ -102,7 +101,7 @@ GlyphRenderer::~GlyphRenderer() {
 // Initialization & Cleanup
 //-----------------------------------------------------------------------------
 auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
-                         const uint32_t screen_height) -> bool {
+        const uint32_t screen_height) -> bool {
     screen_width_  = screen_width;
     screen_height_ = screen_height;
     glyph_width_   = GLYPH_WIDTH;
@@ -112,26 +111,24 @@ auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
 
     SDL_Surface* surface = IMG_Load(atlas_path);
     if (surface == nullptr) {
-        std::println(stderr,
-                     "Failed to load '{}': {}",
-                     atlas_path,
-                     SDL_GetError());
+        std::println(
+                stderr, "Failed to load '{}': {}", atlas_path, SDL_GetError());
         return false;
     }
 
     glGenTextures(1, &font_texture_);
     glBindTexture(GL_TEXTURE_2D, font_texture_);
-    const int32_t format = (SDL_BYTESPERPIXEL(surface->format) == 4 ? GL_RGBA
-                                                                    : GL_RGB);
+    const int32_t format =
+            (SDL_BYTESPERPIXEL(surface->format) == 4 ? GL_RGBA : GL_RGB);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 format,
-                 surface->w,
-                 surface->h,
-                 0,
-                 format,
-                 GL_UNSIGNED_BYTE,
-                 surface->pixels);
+            0,
+            format,
+            surface->w,
+            surface->h,
+            0,
+            format,
+            GL_UNSIGNED_BYTE,
+            surface->pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     SDL_DestroySurface(surface);
@@ -172,9 +169,9 @@ auto GlyphRenderer::init(const char* atlas_path, const uint32_t screen_width,
     glBindVertexArray(vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBufferData(GL_ARRAY_BUFFER,
-                 VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float),
-                 nullptr,
-                 GL_DYNAMIC_DRAW);
+            VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float),
+            nullptr,
+            GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
 
@@ -209,7 +206,7 @@ void GlyphRenderer::cleanup() {
 // Rendering: Single-string and Batch
 //-----------------------------------------------------------------------------
 auto GlyphRenderer::render_text(const char* text, const int32_t start_col,
-                                const int32_t start_row) const -> void {
+        const int32_t start_row) const -> void {
     glUseProgram(shader_program_);
 
     // Bind the VAO/VBO for drawing quads
@@ -225,10 +222,8 @@ auto GlyphRenderer::render_text(const char* text, const int32_t start_col,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Upload the orthographic projection matrix to the shader
-    glUniformMatrix4fv(u_projection_loc_,
-                       1,
-                       GL_FALSE,
-                       glm::value_ptr(projection_matrix_));
+    glUniformMatrix4fv(
+            u_projection_loc_, 1, GL_FALSE, glm::value_ptr(projection_matrix_));
 
     // ------------------------------------------------------------------------
     // Compute how much UV space each glyph occupies
@@ -281,15 +276,15 @@ auto GlyphRenderer::render_text(const char* text, const int32_t start_col,
 
         // Update the VBO with our quad's vertex data
         glBufferSubData(GL_ARRAY_BUFFER,
-                        0,
-                        VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float),
-                        verts.data());
+                0,
+                VERTICES_PER_QUAD * FLOATS_PER_VERTEX * sizeof(float),
+                verts.data());
         glDrawArrays(GL_TRIANGLES, 0, VERTICES_PER_QUAD);
     }
 }
 
-void GlyphRenderer::render_console(const char* glyphs, const uint32_t cols,
-                                   const uint32_t rows) const {
+void GlyphRenderer::render_console(
+        const char* glyphs, const uint32_t cols, const uint32_t rows) const {
     glUseProgram(shader_program_);
 
     // Bind the VAO/VBO for drawing batches of quads
@@ -305,10 +300,8 @@ void GlyphRenderer::render_console(const char* glyphs, const uint32_t cols,
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Upload the orthographic projection matrix to the shader
-    glUniformMatrix4fv(u_projection_loc_,
-                       1,
-                       GL_FALSE,
-                       glm::value_ptr(projection_matrix_));
+    glUniformMatrix4fv(
+            u_projection_loc_, 1, GL_FALSE, glm::value_ptr(projection_matrix_));
 
     // Compute UV step per glyph in atlas
     const float uv_step_x = 1.F / static_cast<float>(atlas_cols_);
@@ -327,8 +320,8 @@ void GlyphRenderer::render_console(const char* glyphs, const uint32_t cols,
     for (uint32_t row_idx = 0; row_idx < rows; ++row_idx) {
         for (uint32_t col_idx = 0; col_idx < cols; ++col_idx) {
             // Get glyph code from the flat array
-            const auto glyph_code = static_cast<uint8_t>(
-                                     glyphs[(row_idx * cols) + col_idx]);
+            const auto glyph_code =
+                    static_cast<uint8_t>(glyphs[(row_idx * cols) + col_idx]);
 
             // Compute tile indices in atlas
             const uint32_t tile_x_idx = glyph_code % atlas_cols_;

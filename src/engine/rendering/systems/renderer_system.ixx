@@ -1,29 +1,21 @@
-//-----------------------------------------------------------------------------
-// renderer_system.ixx
-//-----------------------------------------------------------------------------
+module;
+#include <memory>
+
 export module Engine.Rendering.Systems.Core;
 
-import Engine.Core;
-import Engine.Rendering.GlyphRenderer;
-import Engine.Ecs.World;
-import Engine.Rendering.Systems.TileMap;
+import Engine.Core; // for GraphicsContext and Color
+import Engine.Ecs.Registry; // ECS Registry
+import Engine.Rendering.RendererInterface; // IRenderer (frontend)
 
 export class RenderSystem {
 public:
-    // Pass the GraphicsContext by reference since it's owned elsewhere
-    RenderSystem(GraphicsContext& graphics_context,
-                 GlyphRenderer&&  glyph_renderer);
-
-    // Set the ECS world the render system will query
-    void set_world(EcsWorld& world);
-
-    void update(float delta_time);
+    RenderSystem(GraphicsContext&      graphics_context,
+            std::unique_ptr<IRenderer> renderer);
+    void set_world(Registry& world);
+    void update(float delta_time) const;
 
 private:
-    GraphicsContext& graphics_context_; // Not owned
-    GlyphRenderer    glyph_renderer_; // Owned by this system
-    EcsWorld*        world_ = nullptr;
-
-    // Composition of sub-render systems
-    TileMapRenderSystem tile_map_renderer_;
+    GraphicsContext& graphics_context_; // not owned (window/GL context)
+    std::unique_ptr<IRenderer> renderer_; // owned rendering backend
+    Registry*                  world_ = nullptr; // not owned (ECS registry)
 };

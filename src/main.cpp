@@ -8,63 +8,66 @@
 #include <print>
 #include <utility>
 
-import Engine.Rendering.Systems.Core; // RenderSystem
-import Engine.Rendering.GlyphRenderer; // GlyphRenderer
 import Engine.Core; // GraphicsContext
-import Engine.Ecs.World; // EcsWorld
+import Engine.Ecs.Registry; // Registry
 import Engine.Ecs.Entity; // Entity
-import Game.World.Dungeon; // Dungeon class
-import Game.World.Dungeon.Systems.DungeonToTileMap;
-import Game.Actors.PlayerFactory;
+import Engine.Rendering.Systems.Core; // RenderSystem
+import Engine.Rendering.RendererInterface; // IRenderer
+import Engine.Rendering.OpenGlRenderer; // OpenGLRenderer
+import Game.World.Dungeon; // Dungeon
+import Game.World.Dungeon.Systems.DungeonToTileMap; // DungeonToTileMapSystem
+import Game.Actors.PlayerFactory; // create_player()
 
 constexpr int         SCREEN_WIDTH    = 800;
 constexpr int         SCREEN_HEIGHT   = 600;
+constexpr int         TILEMAP_COLS    = 80;
+constexpr int         TILEMAP_ROWS    = 25;
 static constexpr auto FONT_ATLAS_PATH = "assets/fonts/cp437_8x16.png";
 
 auto main() -> int {
-    //-------------------------------------------------------------------------
-    // INIT DATA
-    //-------------------------------------------------------------------------
-    Dungeon dungeon({.width = 80, .height = 25});
+    //------------------------------------------------------------------------
+    // 1) Generate dungeon & initialize ECS world
+    //------------------------------------------------------------------------
+    Dungeon dungeon({.width = TILEMAP_COLS, .height = TILEMAP_ROWS});
     dungeon.generate();
 
-    EcsWorld               world;
+    Registry               world;
     DungeonToTileMapSystem map_system(dungeon);
     map_system.initialize(world);
 
     // spawn player at tile (2,2)
-    Entity player = create_player(world, 2, 2);
+    [[maybe_unused]] Entity player = create_player(world, 2, 2);
 
-    //---------------------------------------------------------------------
-    // 1) Create the GraphicsContext
-    //---------------------------------------------------------------------
-    auto maybe_graphics_context = GraphicsContext::create(
-                             "Sandbox", SCREEN_WIDTH, SCREEN_HEIGHT);
-    if (!maybe_graphics_context) {
-        return -1; // failed to init SDL/window
-    }
-
-    GraphicsContext graphics_context = std::move(*maybe_graphics_context);
-
-    //---------------------------------------------------------------------
-    // 2) Create the GlyphRenderer
-    //---------------------------------------------------------------------
-    auto maybe_glyph_renderer = GlyphRenderer::create(
-                             FONT_ATLAS_PATH, SCREEN_WIDTH, SCREEN_HEIGHT);
-    if (!maybe_glyph_renderer) {
+    //------------------------------------------------------------------------
+    // 2) Create the GraphicsContext (SDL + GL)
+    //------------------------------------------------------------------------
+    auto maybe_gc =
+            GraphicsContext::create("Sandbox", SCREEN_WIDTH, SCREEN_HEIGHT);
+    if (!maybe_gc) {
+        std::println("Failed to initialize graphics context");
         return -1;
     }
-    GlyphRenderer glyph_renderer = std::move(*maybe_glyph_renderer);
+    GraphicsContext graphics_context = std::move(*maybe_gc);
 
-    //---------------------------------------------------------------------
-    // 3) Create and hook up the ECS-powered RenderSystem
-    //---------------------------------------------------------------------
-    RenderSystem core_renderer(graphics_context, std::move(glyph_renderer));
-    core_renderer.set_world(world);
+    //------------------------------------------------------------------------
+    // 3) Create the OpenGL‐based renderer (implements IRenderer)
+    //------------------------------------------------------------------------
+    auto renderer = OpenGlRenderer::create(
+            FONT_ATLAS_PATH, SCREEN_WIDTH, SCREEN_HEIGHT);
+    if (!renderer) {
+        std::println("Failed to initialize renderer");
+        return -1;
+    }
 
-    //---------------------------------------------------------------------
-    // 4) Main Game / App Loop
-    //---------------------------------------------------------------------
+    //------------------------------------------------------------------------
+    // 4) Hook up the RenderSystem with our ECS world + renderer
+    //------------------------------------------------------------------------
+    RenderSystem render_system(graphics_context, std::move(renderer));
+    render_system.set_world(world);
+
+    //------------------------------------------------------------------------
+    // 5) Main loop
+    //------------------------------------------------------------------------
     bool is_running = true;
     while (is_running) {
         SDL_Event event;
@@ -74,13 +77,13 @@ auto main() -> int {
             }
         }
 
-        constexpr float DELTA_TIME = 0.0167f; // ~60 FPS
-        core_renderer.update(DELTA_TIME);
+        constexpr float DELTA_TIME = 1.F / 60.F;
+        render_system.update(DELTA_TIME);
     }
 
-    //---------------------------------------------------------------------
-    // 5) Cleanup
-    //---------------------------------------------------------------------
+    //------------------------------------------------------------------------
+    // 6) Cleanup
+    //------------------------------------------------------------------------
     SDL_Quit();
     return 0;
 }

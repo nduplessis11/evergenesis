@@ -4,7 +4,7 @@ module;
 
 export module Game.World.Dungeon.Systems.DungeonToTileMap;
 
-import Engine.Ecs.World;
+import Engine.Ecs.Registry;
 import Engine.Rendering.Components.TileMap;
 import Game.World.Dungeon;
 import Game.World.Dungeon.Glyphs;
@@ -14,7 +14,7 @@ public:
     explicit DungeonToTileMapSystem(Dungeon& dungeon)
         : dungeon_(dungeon) {}
 
-    void initialize(EcsWorld& world) const {
+    void initialize(Registry& world) const {
         const uint32_t cols = static_cast<uint32_t>(dungeon_.width());
         const uint32_t rows = static_cast<uint32_t>(dungeon_.height());
 
