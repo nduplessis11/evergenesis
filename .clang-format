@@ -13,10 +13,10 @@ AccessModifierOffset: -4 # Keep 'public:', 'protected:', 'private:' aligned with
 NamespaceIndentation: None
 IndentCaseLabels: false
 ContinuationIndentWidth: 8
-AlignAfterOpenBracket: DontAlign
+AlignAfterOpenBracket: Align
 
 # Column wrapping
-ColumnLimit: 80          # Historically, many Boost libraries aim for ~80 columns.
+ColumnLimit: 80
 
 # Braces
 BreakBeforeBraces: Attach

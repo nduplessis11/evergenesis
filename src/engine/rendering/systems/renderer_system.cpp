@@ -16,7 +16,7 @@ import Engine.Ecs.Entity;
 constexpr Color DARK_GREY_COLOR{.r = 0.1F, .g = 0.1F, .b = 0.1F, .a = 1.0F};
 
 RenderSystem::RenderSystem(
-        GraphicsContext& graphics_context, std::unique_ptr<IRenderer> renderer)
+        SdlGlGraphicsContext& graphics_context, std::unique_ptr<IRenderer> renderer)
     : graphics_context_(graphics_context), renderer_(std::move(renderer)) {
     // The renderer is initialized and owned by this RenderSystem
 }
@@ -27,7 +27,7 @@ void RenderSystem::set_world(Registry& world) {
 
 void RenderSystem::update(float /*delta_time*/) const {
     // Clear screen to a dark gray background
-    GraphicsContext::begin_frame(DARK_GREY_COLOR);
+    SdlGlGraphicsContext::begin_frame(DARK_GREY_COLOR);
 
     if (world_ != nullptr) {
         bool drew_map = false;

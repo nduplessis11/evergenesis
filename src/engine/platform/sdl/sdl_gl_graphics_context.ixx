@@ -6,22 +6,22 @@ module;
 #include <optional>
 #include <string>
 
-export module Engine.Core:Graphics;
-import :Types;
+export module Engine.Platform.Sdl;
+import Engine.Core;
 
-export class GraphicsContext {
+export class SdlGlGraphicsContext {
 public:
     // Factory function
     static auto create(const std::string& title, int width, int height)
-                             -> std::optional<GraphicsContext>;
+                             -> std::optional<SdlGlGraphicsContext>;
 
-    GraphicsContext(const GraphicsContext&)                    = delete;
-    auto operator=(const GraphicsContext&) -> GraphicsContext& = delete;
+    SdlGlGraphicsContext(const SdlGlGraphicsContext&)                    = delete;
+    auto operator=(const SdlGlGraphicsContext&) -> SdlGlGraphicsContext& = delete;
 
-    GraphicsContext(GraphicsContext&&) noexcept;
-    auto operator=(GraphicsContext&&) noexcept -> GraphicsContext&;
+    SdlGlGraphicsContext(SdlGlGraphicsContext&&) noexcept;
+    auto operator=(SdlGlGraphicsContext&&) noexcept -> SdlGlGraphicsContext&;
 
-    ~GraphicsContext();
+    ~SdlGlGraphicsContext();
     void cleanup();
 
     static void begin_frame(Color color);
@@ -29,7 +29,7 @@ public:
 
 private:
     // private constructor used by factory
-    GraphicsContext() = default;
+    SdlGlGraphicsContext() = default;
 
     auto init(const std::string& title, int width, int height) -> bool;
 

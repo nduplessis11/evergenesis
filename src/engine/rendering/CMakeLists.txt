@@ -7,6 +7,8 @@ target_sources(engine
         components/glyph_renderable.ixx
         rendering_interface.ixx
         opengl_renderer.ixx
+        renderer.ixx
+        #gl_backend.ixx
     PRIVATE
         systems/renderer_system.cpp
         systems/tile_map_render_system.cpp

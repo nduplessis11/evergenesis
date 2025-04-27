@@ -8,7 +8,7 @@
 #include <print>
 #include <utility>
 
-import Engine.Core; // GraphicsContext
+import Engine.Platform.Sdl; // GraphicsContext
 import Engine.Ecs.Registry; // Registry
 import Engine.Ecs.Entity; // Entity
 import Engine.Rendering.Systems.Core; // RenderSystem
@@ -42,12 +42,12 @@ auto main() -> int {
     // 2) Create the GraphicsContext (SDL + GL)
     //------------------------------------------------------------------------
     auto maybe_gc =
-            GraphicsContext::create("Sandbox", SCREEN_WIDTH, SCREEN_HEIGHT);
+            SdlGlGraphicsContext::create("Sandbox", SCREEN_WIDTH, SCREEN_HEIGHT);
     if (!maybe_gc) {
         std::println("Failed to initialize graphics context");
         return -1;
     }
-    GraphicsContext graphics_context = std::move(*maybe_gc);
+    SdlGlGraphicsContext graphics_context = std::move(*maybe_gc);
 
     //------------------------------------------------------------------------
     // 3) Create the OpenGL‐based renderer (implements IRenderer)

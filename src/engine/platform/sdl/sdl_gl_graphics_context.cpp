@@ -5,7 +5,7 @@ module;
 #include <print>
 #include <string>
 
-module Engine.Core;
+module Engine.Platform.Sdl;
 
 constexpr int RENDERER_GL_MAJOR_VERSION = 4;
 constexpr int RENDERER_GL_MINOR_VERSION = 6;
@@ -13,22 +13,22 @@ constexpr int RENDERER_GL_MINOR_VERSION = 6;
 //------------------------------------------------------------------------------
 // Factory
 //------------------------------------------------------------------------------
-auto GraphicsContext::create(const std::string& title, const int width,
+auto SdlGlGraphicsContext::create(const std::string& title, const int width,
                              const int height)
-                         -> std::optional<GraphicsContext> {
-    GraphicsContext instance;
+                         -> std::optional<SdlGlGraphicsContext> {
+    SdlGlGraphicsContext instance;
     if (!instance.init(title, width, height)) {
         return std::nullopt;
     }
     // This calls the *move constructor* of GraphicsContext when constructing
     // the optional
-    return std::make_optional<GraphicsContext>(std::move(instance));
+    return std::make_optional<SdlGlGraphicsContext>(std::move(instance));
 }
 
 //------------------------------------------------------------------------------
 // Move Constructor
 //------------------------------------------------------------------------------
-GraphicsContext::GraphicsContext(GraphicsContext&& other) noexcept {
+SdlGlGraphicsContext::SdlGlGraphicsContext(SdlGlGraphicsContext&& other) noexcept {
     // Steal the pointers
     window_     = other.window_;
     gl_context_ = other.gl_context_;
@@ -41,8 +41,8 @@ GraphicsContext::GraphicsContext(GraphicsContext&& other) noexcept {
 //------------------------------------------------------------------------------
 // Move Assignment
 //------------------------------------------------------------------------------
-auto GraphicsContext::operator=(GraphicsContext&& other) noexcept
-                         -> GraphicsContext& {
+auto SdlGlGraphicsContext::operator=(SdlGlGraphicsContext&& other) noexcept
+                         -> SdlGlGraphicsContext& {
     if (this != &other) {
         // Clean up our current resources, if any
         cleanup();
@@ -60,13 +60,13 @@ auto GraphicsContext::operator=(GraphicsContext&& other) noexcept
 
 //------------------------------------------------------------------------------
 // Destructor (no SDL_Quit here if you plan to move contexts around)
-GraphicsContext::~GraphicsContext() {
+SdlGlGraphicsContext::~SdlGlGraphicsContext() {
     cleanup();
 }
 
 //------------------------------------------------------------------------------
 // Cleanup only frees the window/context if they're valid
-void GraphicsContext::cleanup() {
+void SdlGlGraphicsContext::cleanup() {
     if (gl_context_ != nullptr) {
         SDL_GL_DestroyContext(gl_context_);
         gl_context_ = nullptr;
@@ -87,19 +87,19 @@ void GraphicsContext::cleanup() {
 //------------------------------------------------------------------------------
 // Frame functions
 //------------------------------------------------------------------------------
-void GraphicsContext::begin_frame(const Color color) {
+void SdlGlGraphicsContext::begin_frame(const Color color) {
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void GraphicsContext::end_frame() const {
+void SdlGlGraphicsContext::end_frame() const {
     SDL_GL_SwapWindow(window_);
 }
 
 //------------------------------------------------------------------------------
 // Init
 //------------------------------------------------------------------------------
-auto GraphicsContext::init(const std::string& title, const int width,
+auto SdlGlGraphicsContext::init(const std::string& title, const int width,
                            const int height) -> bool {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::println(stderr, "Failed to initialize SDL: {}", SDL_GetError());
