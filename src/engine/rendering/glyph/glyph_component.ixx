@@ -1,5 +1,6 @@
 module;
 #include <string>
+#include <cstdint>
 
 export module Engine.Rendering.Glyph:Component;
 

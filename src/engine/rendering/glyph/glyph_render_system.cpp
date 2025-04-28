@@ -1,9 +1,12 @@
 module;
 #include <utility>
+#include <cstdint>
 
 module Engine.Rendering.Glyph;
 
 import Engine.Physics.Components.Transform;
+import Engine.Rendering.Renderer;
+import Engine.Ecs.Registry;
 
 GlyphRenderSystem::GlyphRenderSystem(Renderer::RendererFrontend& frontend,
                                      GlyphResource               resource)
