@@ -1,5 +1,5 @@
 target_sources(engine
-    PUBLIC FILE_SET cxx_modules TYPE CXX_MODULES BASE_DIRS . FILES
+    PUBLIC FILE_SET cxx_modules TYPE CXX_MODULES BASE_DIRS ${CMAKE_CURRENT_LIST_DIR} FILES
         systems/renderer_system.ixx
         systems/tile_map_render_system.ixx
         glyph_renderer_old.ixx
@@ -8,10 +8,14 @@ target_sources(engine
         rendering_interface.ixx
         opengl_renderer.ixx
         renderer.ixx
+        glyph/glyph.ixx
+        glyph/glyph_component.ixx
+        glyph/glyph_render_system.ixx
         #gl_backend.ixx
     PRIVATE
         systems/renderer_system.cpp
         systems/tile_map_render_system.cpp
         glyph_renderer_old.cpp
         opengl_renderer.cpp
+        glyph/glyph_render_system.cpp
 )
