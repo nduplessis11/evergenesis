@@ -3,6 +3,9 @@
 //-----------------------------------------------------------------------------
 module;
 #include <cstdint>
+#include <cstddef>
+#include <utility>
+
 module Game.World.Dungeon;
 
 Dungeon::Dungeon(const DungeonSize dimensions)
