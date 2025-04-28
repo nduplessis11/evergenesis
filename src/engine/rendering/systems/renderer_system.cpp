@@ -3,6 +3,7 @@ module;
 #include <print>
 #include <utility>
 #include <vector>
+#include <memory>
 
 module Engine.Rendering.Systems.Core;
 

@@ -1,4 +1,5 @@
 module;
+#include <cstdint>
 
 module Engine.Ecs.Entity;
 

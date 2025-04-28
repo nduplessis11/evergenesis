@@ -4,7 +4,9 @@
 // ----------------------------------------------------------------------------
 module;
 #include <cassert>
+#include <cstdint>
 #include <vector>
+#include <utility>
 
 export module Engine.Ecs.ComponentStorage;
 

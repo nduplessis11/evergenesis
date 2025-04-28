@@ -12,7 +12,7 @@ export struct DungeonSize {
     std::size_t height;
 };
 
-export enum class TileType : uint8_t {
+export enum class TileType : int8_t {
     Unknown = -1, // Default/invalid state
     Floor   = 0,  // Walkable floor tile
     Wall    = 1,  // Solid wall tile that blocks movement
