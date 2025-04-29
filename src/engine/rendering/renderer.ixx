@@ -18,8 +18,6 @@ struct RenderCommand {
     float       y;
     float       w;
     float       h;
-    float       u;
-    float       v;
 
     Color              color;
     TextureHandle      texture;
@@ -43,9 +41,16 @@ private:
 
 struct IRendererBackend {
     virtual ~IRendererBackend()                                      = default;
+
+    /// Initialize graphics state (shaders, VAO, blending, etc.)
     virtual void initialize()                                        = 0;
-    virtual void load_shader(std::string name, std::string vertex_src,
-                             std::string fragment_src)               = 0;
+
+    /// Load and compile a shader program under a given name
+    virtual void load_shader(const std::string& name,
+                             const std::string& vertex_src,
+                             const std::string& fragment_src)        = 0;
+
+    /// Execute all queued RenderCommands
     virtual void execute(const std::vector<RenderCommand>& commands) = 0;
 };
 } // namespace Renderer

@@ -1,6 +1,7 @@
 module;
-#include <utility>
 #include <cstdint>
+#include <utility>
+#include <vector>
 
 module Engine.Rendering.Glyph;
 
@@ -16,6 +17,10 @@ void GlyphRenderSystem::update(Registry& registry) {
     // Precompute UV scale from atlas dimensions
     const float uv_scale_x = 1.f / static_cast<float>(resource_.atlas_cols);
     const float uv_scale_y = 1.f / static_cast<float>(resource_.atlas_rows);
+
+    // Accumulate all glyph vertices here
+    std::vector<float> vertices;
+    vertices.reserve(256 * 4 * 6);  // reserve for ~256 glyphs
 
     // Tile size in pixels
     const float tile_w = resource_.glyph_width;
@@ -38,10 +43,32 @@ void GlyphRenderSystem::update(Registry& registry) {
         const float max_v = min_v + uv_scale_y;
 
         // Compute screen position of the glyph
-        const float pos_x = static_cast<float>(transform.position.x) * tile_w;
-        const float pos_y = static_cast<float>(transform.position.y) * tile_h;
+        const float pos_x = static_cast<float>(transform.position.x);
+        const float pos_y = static_cast<float>(transform.position.y);
 
-        // TODO: Use the `GlyphRenderer::render_console` as reference. Currently
-        // using render_text which is incorrect
+        // Append 6 vertices (2 triangles) for a quad
+        // clang-format off
+        vertices.insert(vertices.end(), {
+            pos_x,          pos_y + tile_h, min_u, max_v,
+            pos_x,          pos_y,          min_u, min_v,
+            pos_x + tile_w, pos_y,          max_u, min_v,
+            pos_x,          pos_y + tile_h, min_u, max_v,
+            pos_x + tile_w, pos_y,          max_u, min_v,
+            pos_x + tile_w, pos_y + tile_h, max_u, max_v,
+        });
+        // clang-format on
     });
+
+    // Submit exactly one draw command for all glyphs
+    if (!vertices.empty()) {
+        frontend_.submit(Renderer::RenderCommand{
+            Renderer::CommandType::TexturedQuad,
+            0, 0,
+            0, 0,
+            {1, 1, 1, 1},
+            resource_.texture,
+            resource_.shader_name,
+            std::move(vertices)
+        });
+    }
 }

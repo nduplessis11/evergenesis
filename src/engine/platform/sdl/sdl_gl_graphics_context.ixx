@@ -6,7 +6,7 @@ module;
 #include <optional>
 #include <string>
 
-export module Engine.Platform.Sdl;
+export module Engine.Platform.Sdl:GlGraphicsContext;
 import Engine.Core;
 
 export class SdlGlGraphicsContext {
