@@ -33,7 +33,9 @@ public:
     [[nodiscard]] auto get_commands() const {
         return commands_;
     };
-    void clear();
+    void clear() noexcept {
+        commands_.clear();
+    };
 
 private:
     std::vector<RenderCommand> commands_;
