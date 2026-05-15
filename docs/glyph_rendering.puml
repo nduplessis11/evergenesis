@@ -1,0 +1,182 @@
+@startuml glyph_rendering
+title Character Rendering Pipeline
+
+skinparam groupInheritance 2
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+' ─────────────────────────────────────────────
+'  ECS LAYER
+' ─────────────────────────────────────────────
+package "ECS" {
+
+    class Registry {
+        +add_component<C>(entity, component)
+        +remove_component<C>(entity)
+        +get_component<C>(entity) : C&
+        +for_each<C1,C2,...>(func)
+        -storages : map<type_index, IComponentStorage*>
+    }
+
+    interface IComponentStorage {
+        +remove(entity)
+    }
+
+    class "ComponentStorage<T>" as ComponentStorage {
+        +insert(entity, value)
+        +remove(entity)
+        +get(entity) : T&
+        -dense  : vector<T>
+        -sparse : vector<size_t>
+    }
+
+    Registry o-- "0..*" IComponentStorage
+    ComponentStorage ..|> IComponentStorage
+}
+
+' ─────────────────────────────────────────────
+'  COMPONENTS
+' ─────────────────────────────────────────────
+package "Components" {
+
+    class Transform {
+        +position : glm::vec2
+    }
+
+    class GlyphRenderable {
+        +glyph : char
+    }
+
+    class GlyphResource {
+        +texture    : GLuint
+        +shader_name: string
+        +atlas_cols : uint32_t
+        +atlas_rows : uint32_t
+        +glyph_w    : uint32_t
+        +glyph_h    : uint32_t
+    }
+
+    class TileMap {
+        +glyphs : vector<char>
+        +cols   : uint32_t
+        +rows   : uint32_t
+    }
+}
+
+' ─────────────────────────────────────────────
+'  SYSTEMS
+' ─────────────────────────────────────────────
+package "Systems" {
+
+    interface ISystem {
+        +update(registry, dt)
+    }
+
+    class RenderSystem {
+        +update(registry, dt)
+        -renderer_ : GlyphRenderer*
+        __render steps__
+        1. query TileMap entities
+        2. overlay GlyphRenderable entities
+        3. call render_console(combined_glyphs)
+    }
+
+    class GlyphRenderSystem {
+        +update(registry, dt)
+        __render steps__
+        1. reserve vertex buffer
+        2. for each (Transform + GlyphResource)\n   compute atlas UV\n   append 6 vertices
+        3. submit single RenderCommand
+    }
+
+    RenderSystem     ..|> ISystem
+    GlyphRenderSystem ..|> ISystem
+}
+
+' ─────────────────────────────────────────────
+'  RENDERING LAYER
+' ─────────────────────────────────────────────
+package "Rendering" {
+
+    class RendererFrontend {
+        +submit(cmd : RenderCommand)
+        +get_commands() : vector<RenderCommand>
+        -queue : vector<RenderCommand>
+    }
+
+    class RenderCommand {
+        +type        : RenderCommandType
+        +vertex_data : vector<float>
+        +texture     : GLuint
+        +shader_name : string
+    }
+
+    enum RenderCommandType {
+        TexturedQuad
+    }
+
+    class GlyphRenderer {
+        +init(font_path, w, h)
+        +render_console(glyphs, cols, rows)
+        +render_text(text, x, y)
+        -vao, vbo   : GLuint
+        -texture    : GLuint
+        -shader     : GLuint
+        -proj       : glm::mat4
+        __atlas config__
+        ATLAS_COLS = 32
+        ATLAS_ROWS = 8
+        GLYPH_W = 8px, GLYPH_H = 16px
+    }
+
+    class GlBackend {
+        +execute(cmd : RenderCommand)
+        -shaders : map<string, GLuint>
+        +compile_shader(name, vert, frag)
+    }
+
+    RenderCommand  *-- RenderCommandType
+    RendererFrontend "1" o-- "0..*" RenderCommand
+    GlBackend ..> RenderCommand : executes
+}
+
+' ─────────────────────────────────────────────
+'  GPU SHADERS (note)
+' ─────────────────────────────────────────────
+note bottom of GlyphRenderer
+  <b>Vertex layout:</b> [x, y, u, v] × 6 verts/glyph
+  <b>Vertex shader:</b> gl_Position = vec4(pos,0,1) * u_proj
+  <b>Fragment shader:</b> frag = texture(u_tex, v_uv)
+  <b>Projection:</b> glm::ortho(0, W, H, 0)  [pixel coords]
+  <b>Blend:</b> GL_SRC_ALPHA / GL_ONE_MINUS_SRC_ALPHA
+end note
+
+' ─────────────────────────────────────────────
+'  CROSS-LAYER RELATIONSHIPS
+' ─────────────────────────────────────────────
+RenderSystem      ..> Registry        : queries\nTileMap /\nGlyphRenderable +\nTransform
+GlyphRenderSystem ..> Registry        : queries\nTransform +\nGlyphResource
+RenderSystem      --> GlyphRenderer   : uses
+GlyphRenderSystem --> RendererFrontend: submits to
+RendererFrontend  --> GlBackend       : flushes to
+
+Registry --> "ComponentStorage<Transform>"     : stores
+Registry --> "ComponentStorage<GlyphRenderable>": stores
+Registry --> "ComponentStorage<GlyphResource>" : stores
+Registry --> "ComponentStorage<TileMap>"       : stores
+
+' ─────────────────────────────────────────────
+'  ATLAS UV CALCULATION (note)
+' ─────────────────────────────────────────────
+note right of GlyphResource
+  <b>UV per glyph (code = ASCII value):</b>
+  tile_x = code % atlas_cols
+  tile_y = code / atlas_cols
+  min_u  = tile_x / atlas_cols
+  min_v  = tile_y / atlas_rows
+  max_u  = min_u + 1/atlas_cols
+  max_v  = min_v + 1/atlas_rows
+end note
+
+@enduml
